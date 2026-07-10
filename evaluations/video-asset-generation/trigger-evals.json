@@ -1,0 +1,14 @@
+[
+  {"query": "Generate an image with Nano Banana 2 for my short.", "should_trigger": true},
+  {"query": "Make a Mexican-Spanish voiceover with ElevenLabs.", "should_trigger": true},
+  {"query": "Animate this image into a video clip with Wan 2.6.", "should_trigger": true},
+  {"query": "Create background music and SFX for my video with ElevenLabs.", "should_trigger": true},
+  {"query": "Which ElevenLabs voice should I use for a serious ad — Antonio or Marto?", "should_trigger": true},
+  {"query": "Upload my generated asset to Luna CDN.", "should_trigger": true},
+  {"query": "Generate a cinematic-realism style image via kie.ai.", "should_trigger": true},
+  {"query": "Install HyperFrames and scaffold the project.", "should_trigger": false},
+  {"query": "Add karaoke captions to the finished video.", "should_trigger": false},
+  {"query": "Compose the final short for WhatsApp Stories.", "should_trigger": false},
+  {"query": "Generate an image with DALL-E or Midjourney.", "should_trigger": false},
+  {"query": "Launch a Facebook ad campaign.", "should_trigger": false}
+]

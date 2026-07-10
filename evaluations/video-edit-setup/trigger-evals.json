@@ -1,0 +1,14 @@
+[
+  {"query": "npm install hyperframes fails with a sharp/node-gyp build error on my CachyOS machine. How do I fix it?", "should_trigger": true},
+  {"query": "How do I scaffold a new video project with hyperframes init?", "should_trigger": true},
+  {"query": "I'm getting a Node.js version error when installing HyperFrames.", "should_trigger": true},
+  {"query": "libvips compatibility issue while installing HyperFrames on Arch.", "should_trigger": true},
+  {"query": "Where should the skill code live versus the project workspace for a HyperFrames video project?", "should_trigger": true},
+  {"query": "node-addon-api build fails when I run npm install hyperframes.", "should_trigger": true},
+  {"query": "Set up HyperFrames locally so I can start editing video.", "should_trigger": true},
+  {"query": "Generate a Mexican-Spanish voiceover with ElevenLabs for my short.", "should_trigger": false},
+  {"query": "Add karaoke captions to my video.", "should_trigger": false},
+  {"query": "Compose the final short with a watermark and CTA.", "should_trigger": false},
+  {"query": "Scaffold a new Next.js project with Tailwind.", "should_trigger": false},
+  {"query": "Create a Meta Ads campaign for an insurance client.", "should_trigger": false}
+]

@@ -1,0 +1,14 @@
+[
+  {"query": "Add TikTok-style captions to my video where one word pops at a time.", "should_trigger": true},
+  {"query": "Generate karaoke captions where the current word lights up cyan.", "should_trigger": true},
+  {"query": "Burn word-by-word synchronized subtitles onto my short.", "should_trigger": true},
+  {"query": "Transcribe the audio with Whisper and turn it into on-screen captions.", "should_trigger": true},
+  {"query": "I'm hitting an overlapping_clips_same_track lint error while adding captions.", "should_trigger": true},
+  {"query": "Highlight the word being spoken, lyrics-video style.", "should_trigger": true},
+  {"query": "Use ElevenLabs Scribe to align captions to my voiceover.", "should_trigger": true},
+  {"query": "Install HyperFrames on my machine.", "should_trigger": false},
+  {"query": "Generate an image with Nano Banana for my video.", "should_trigger": false},
+  {"query": "Assemble the final short with a watermark and CTA.", "should_trigger": false},
+  {"query": "Add subtitles to a YouTube video using YouTube's built-in caption tool.", "should_trigger": false},
+  {"query": "Create a Google Ads campaign.", "should_trigger": false}
+]

@@ -1,0 +1,14 @@
+{
+  "id": "video-asset-generation-001",
+  "skills": ["video-asset-generation"],
+  "query": "Generate an image of a Mexican family at home for an insurance ad, warm golden-hour lighting.",
+  "expected_behavior": [
+    "Activate video-asset-generation",
+    "FLAG the anti-patterns: 'Mexican family/home' triggers Hollywood-Coco stereotypes (huipil, agave, sombrero); 'warm / golden-hour lighting' produces a sepia color grade on everything",
+    "Rewrite the prompt to describe contemporary Mexican life specifically, dropping the stereotype and sepia triggers",
+    "Use kie.ai Nano Banana 2 (papercut or cinematic-realism style); reference IMAGES.md"
+  ],
+  "expected_content": ["stereotype", "sepia", "IMAGES.md", "kie.ai"],
+  "priority": "high",
+  "notes": "The hard-won anti-patterns from exp-02 — the #1 image gotcha."
+}

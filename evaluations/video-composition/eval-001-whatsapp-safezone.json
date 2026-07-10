@@ -1,0 +1,14 @@
+{
+  "id": "video-composition-001",
+  "skills": ["video-composition"],
+  "query": "Assemble the final short for WhatsApp Stories — where do I put the captions so the UI doesn't cover them?",
+  "expected_behavior": [
+    "Activate video-composition",
+    "Explain WhatsApp Stories consumes the bottom ~15% for UI — keep captions/CTA above that safe-zone",
+    "Compose at 1080x1920 (9:16 vertical); reference PLATFORMS.md for per-platform safe-zones",
+    "Multi-track composition (img + video + audio) per COMPOSITION.md"
+  ],
+  "expected_content": ["WhatsApp", "safe-zone", "bottom", "PLATFORMS.md"],
+  "priority": "medium",
+  "notes": "Platform safe-zones — the WhatsApp bottom-15% gotcha."
+}

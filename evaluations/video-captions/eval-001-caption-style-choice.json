@@ -1,0 +1,14 @@
+{
+  "id": "video-captions-001",
+  "skills": ["video-captions"],
+  "query": "I have a 30-second voiceover video and want word-by-word captions like TikTok. How do I do it with HyperFrames?",
+  "expected_behavior": [
+    "Activate video-captions",
+    "Explain the two production styles: TikTok-pop (one word at a time, scale-pop animation — PIPELINE.md) vs karaoke (full phrase, active word glows cyan — KARAOKE.md); recommend TikTok-pop for this ask",
+    "Walk the pipeline: STT (Whisper or Scribe) -> JSON -> HTML -> render",
+    "Reference PIPELINE.md and PROVIDERS.md (Whisper vs Scribe choice)"
+  ],
+  "expected_content": ["TikTok-pop", "karaoke", "STT", "PIPELINE.md"],
+  "priority": "high",
+  "notes": "Style choice + pipeline; the two caption styles are the core of this sub-skill."
+}

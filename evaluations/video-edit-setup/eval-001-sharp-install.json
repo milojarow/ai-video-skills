@@ -1,0 +1,14 @@
+{
+  "id": "video-edit-setup-001",
+  "skills": ["video-edit-setup"],
+  "query": "npm install hyperframes fails with a sharp/node-gyp build error on my CachyOS machine. How do I fix it?",
+  "expected_behavior": [
+    "Activate video-edit-setup",
+    "Use Node 22 LTS via nvm — NOT Node 25 (the sharp build fails on it)",
+    "Install with SHARP_FORCE_GLOBAL_LIBVIPS=1 for node-addon-api, then node-gyp, then hyperframes",
+    "Reference the setup SKILL.md recipe"
+  ],
+  "expected_content": ["Node 22", "SHARP_FORCE_GLOBAL_LIBVIPS", "nvm", "sharp"],
+  "priority": "high",
+  "notes": "The rolling-release sharp/libvips install gotcha (cost ~1h to discover)."
+}

@@ -1,0 +1,14 @@
+[
+  {"query": "Compose the final short for WhatsApp Stories — where do I put the captions so the UI doesn't cover them?", "should_trigger": true},
+  {"query": "Assemble my images, audio, and captions into one video.", "should_trigger": true},
+  {"query": "Add a rotating watermark and a CTA typewriter to my short.", "should_trigger": true},
+  {"query": "Build the HyperFrames composition at 1080x1920 vertical.", "should_trigger": true},
+  {"query": "Armar el short con los assets que ya generé y un fade to black al final.", "should_trigger": true},
+  {"query": "Render the final short combining the video clip and the voiceover track.", "should_trigger": true},
+  {"query": "How do I do multi-track audio mixing in my video composition?", "should_trigger": true},
+  {"query": "Install HyperFrames on my machine.", "should_trigger": false},
+  {"query": "Generate a voiceover with ElevenLabs.", "should_trigger": false},
+  {"query": "Add TikTok captions to my clip.", "should_trigger": false},
+  {"query": "Edit a video in DaVinci Resolve.", "should_trigger": false},
+  {"query": "Create a Meta Ads campaign.", "should_trigger": false}
+]

@@ -1,0 +1,32 @@
+# node
+node_modules/
+*.log
+.npm/
+.cache/
+
+# hyperframes
+.hyperframes/
+renders/
+**/dist/
+
+# experiment outputs (videos pesados — tracked aparte si vale la pena)
+output/*.mp4
+output/*.mov
+output/*.webm
+
+# transient transcripts (los importantes los movemos a notes/)
+**/transcripts/*.raw.json
+
+# secrets — nunca
+.env
+.env.local
+*.key
+api-keys.txt
+
+# editor
+.DS_Store
+.vscode/
+.idea/
+
+# Claude Code artifacts (CLAUDE.md is committed in skill repos — the documented exception)
+.claude/memory/

@@ -1,0 +1,14 @@
+{
+  "id": "video-asset-generation-002",
+  "skills": ["video-asset-generation"],
+  "query": "I need a Mexican-Spanish male voiceover for a serious insurance ad. Which ElevenLabs voice and how do I not waste credits picking?",
+  "expected_behavior": [
+    "Activate video-asset-generation",
+    "Recommend from the documented Mexican-Spanish voices (Antonio / Marto / Jose) with their fit notes; reference the VOICES.md selection table",
+    "Use the pre-test pattern: a cheap short TTS to confirm the voice fits before the full render",
+    "Call the ElevenLabs TTS endpoint with the chosen voice_id"
+  ],
+  "expected_content": ["VOICES.md", "pre-test", "ElevenLabs", "voice"],
+  "priority": "medium",
+  "notes": "Voice selection + the pre-test pattern to avoid wasting credits."
+}
