@@ -1,6 +1,6 @@
 ---
 name: video-composition
-description: Assemble a final short video by composing pre-generated assets (images, video clips, audio tracks, captions) into a HyperFrames composition with watermark, CTA, and platform-aware safe-zones. Use this skill whenever the user asks to "compose video", "assemble short", "armar el short", "componer", "build the composition", "render the short", "add watermark", "watermark rotando esquinas", "fade to black", "URL typewriter", "CTA típewriter", "WhatsApp Stories", "Instagram Reels", "1080x1920", "9:16 vertical", or asks how to combine images + audio + captions into a single video. Also triggers on questions about HyperFrames composition patterns, multi-track audio mixing, when to use `<video>` vs `<img>` element, how to truncate a Wan 2.6 video clip in the composition, and platform-specific safe-zones for caption placement (WhatsApp UI consumes bottom 15%). The four reference files cover composition patterns, watermark animation, ending patterns, and per-platform constraints.
+description: Assemble a final short video by composing pre-generated assets (images, video clips, audio tracks, captions) into a HyperFrames composition with watermark, CTA, and platform-aware safe-zones — and prepare video for web delivery. Use this skill whenever the user asks to "compose video", "assemble short", "armar el short", "componer", "build the composition", "render the short", "add watermark", "watermark rotando esquinas", "fade to black", "URL typewriter", "CTA típewriter", "WhatsApp Stories", "Instagram Reels", "1080x1920", "9:16 vertical", or asks how to combine images + audio + captions into a single video. Also use it for looping web video — "hero video", "background video", "seamless loop", "video que loopea", "ping-pong loop", "the loop jumps", "video hero se ve el corte". Also triggers on questions about HyperFrames composition patterns, multi-track audio mixing, when to use `<video>` vs `<img>` element, how to truncate a Wan 2.6 video clip in the composition, autoplay being refused, prefers-reduced-motion for video, and platform-specific safe-zones for caption placement (WhatsApp UI consumes bottom 15%). The reference files cover composition patterns, watermark animation, ending patterns, per-platform constraints, and web-hero loops.
 ---
 
 # Video Composition
@@ -24,6 +24,7 @@ This is the last layer before render. Captions live in `video-captions` (called 
 | Multi-beat compositions: canonical root pattern + the audio/sub-composition freeze bug + workaround | [MULTI-BEAT.md](MULTI-BEAT.md) |
 | Verifying a render before delivery (freezedetect, contact sheet, `hyperframes snapshot`) | [VERIFICATION.md](VERIFICATION.md) |
 | Website-to-video pipeline: capture → beats fan-out → assembly (transcribe, fonts, sub-agent contract) | [WEBSITE-PIPELINE.md](WEBSITE-PIPELINE.md) |
+| Seamless infinite loops for web heroes: ping-pong with ffmpeg, dual 1080p/720p cuts chosen client-side, reduced-motion and autoplay-refusal handling | [WEB-LOOP.md](WEB-LOOP.md) |
 
 ---
 
@@ -117,4 +118,5 @@ Copy the closer one as starting point and adapt:
 - For the watermark rotation animation: [WATERMARK.md](WATERMARK.md)
 - For ending patterns (URL typewriter + fade-to-black): [ENDINGS.md](ENDINGS.md)
 - For platform-specific safe-zones and duration limits: [PLATFORMS.md](PLATFORMS.md)
+- For a video that loops forever on a web page (hero, ambient background): [WEB-LOOP.md](WEB-LOOP.md)
 - For caption rendering (karaoke / TikTok-pop), pivot to the `video-captions` skill — its `KARAOKE.md` and `PIPELINE.md` are the prescriptive references; this composition skill calls the same patterns.
