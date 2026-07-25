@@ -35,7 +35,7 @@ This skill is the **assets layer**. Composition (assembling the assets into a fi
 | Spoken narration | ElevenLabs TTS | `eleven_multilingual_v2`, `language_code: es` for Mexican Spanish |
 | Background music | ElevenLabs Music | Always `force_instrumental: true` so it doesn't fight the voice |
 | One-shot SFX (heartbeat, click, chime) | ElevenLabs Sound Generation | Single sound, brief (0.5-2s) |
-| Public URL for an image (because Wan 2.6 needs it) | Luna CDN | Use `LUNA_API_KEY_VIDEOLAB_RAW` to preserve PNG (don't convert to webp) |
+| Public URL for an image (because i2v models need it) | Luna CDN | Upload input frames with `LUNA_KEY_VIDEOLAB` — the ephemeral vault: PNG stays PNG, auto-deletes in 24 h |
 
 ---
 
@@ -49,7 +49,7 @@ This skill is the **assets layer**. Composition (assembling the assets into a fi
    - Draft each prompt with the `ai-video-skills:scene-prompt-smith` subagent (give it the scene concept + style + protagonist clause; it applies the validated prefix and dodges the anti-patterns).
    - **QA before continuing:** dispatch one `ai-video-skills:asset-qa-validator` per generated image, in parallel (give each the image path + the prompt used + the protagonist clause). Regenerate anything it returns `REGEN` on before step 6. Worth it with several images; for a single image, just eyeball it.
 6. **Decide which segments to animate with Wan 2.6** (only segments ≥4s long — see ANIMATION.md for the efficiency math).
-7. **Upload images-to-be-animated to Luna CDN** (preserve PNG with the RAW key).
+7. **Upload images-to-be-animated to Luna CDN** with `LUNA_KEY_VIDEOLAB` (ephemeral vault — PNG preserved, self-cleaning).
 8. **Submit Wan 2.6 jobs in parallel**, poll to completion, download MP4s.
 9. Hand off to `video-composition` for assembly.
 
@@ -95,7 +95,8 @@ These are mistakes already made and fixed — don't repeat them:
 | "Warm sunlight / golden hour / warm directional lighting" in image prompt | Produces a sepia filter on everything | "Natural neutral lighting" / "soft directional daylight" |
 | Wan 2.6 with audio enabled + person in image | Generates lip-sync that doesn't match the external voiceover | Don't include audio param; explicitly add to prompt: "No lip movement. Subjects remain silent throughout." |
 | Generate Wan video without checking script timing | If segment is <5s, you waste 33%+ of the cost | Either rewrite script segments to be ~4.5-5s, or use `data-media-start` to pick a different slice |
-| Use `LUNA_API_KEY` for Wan input | Webp conversion may break providers that only accept PNG/JPG | Use `LUNA_API_KEY_VIDEOLAB_RAW` for downstream tools that need original format |
+| Upload an i2v input frame with a per-client `LUNA_API_KEY` | It converts to webp; Veo 3.1 and Kling 2.6 then reject the job with `Unsupported image format` — and the frame pollutes a client's permanent vault | Upload input frames with `LUNA_KEY_VIDEOLAB` (ephemeral vault, no transcoding) |
+| Export `LUNA_API_KEY_VIDEOLAB_RAW` | **That variable does not exist** — it resolves to an empty string and the upload goes out with no key or the wrong one | The real variable is `LUNA_KEY_VIDEOLAB`; confirm with `GET /api/me` before uploading |
 | Skip pre-test of brand-name pronunciation | Antonio likes "AcmeSeguros" together; Camila prefers "Acme Seguros" with space — assumption costs a re-render | Always pre-test 2 variants ($0.005), pick the natural one |
 | Use Camila for VOs >20 seconds | Voice goes "lazy" toward the end (validated short-02) | Marto for longer VOs; Camila for shorter (<15s) ones where her warmth shines |
 

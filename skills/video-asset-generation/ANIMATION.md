@@ -51,7 +51,7 @@ Animate a static image with cinematic motion. Used in short-02 for 3 segments. T
 | Duration | enum `'5'`, `'10'`, `'15'` (seconds) | **5 seconds is the minimum.** No 3s, no 4s. If your composition segment is shorter, you pay for unused video. |
 | Resolution | enum `'720p'`, `'1080p'` | 1080p is the right call for WhatsApp Stories. 720p only if budget is tight and quality target is lower. |
 | `image_urls` | max 1 | One source image per video. Multi-image input is not supported by this model. |
-| Image format | JPEG, PNG, **or WEBP** | Wan accepts webp. Other models in the kie.ai catalog (Kling 2.6) accept only JPG/PNG — see Luna CDN notes. |
+| Image format | JPEG, PNG, **or WEBP** | Wan accepts webp. Kling 2.6 (kie.ai) and Veo 3.1 (OpenRouter) accept only JPEG/PNG — upload input frames as PNG and the question never comes up. See [LUNA-CDN.md](LUNA-CDN.md). |
 | Image size | min 256×256, max 10 MB | All papercut/cinematic images from Nano Banana 2 are well within bounds. |
 | Image source | Public URL | **Must be reachable from kie.ai.** Local PNG paths don't work. Use Luna CDN. |
 
@@ -154,9 +154,11 @@ The actual MP4s are at `~/video-lab/<topic>/<video-name>/<variant>/videos/` for 
 
 Wan needs a public URL for the input image. Local files don't work. Luna CDN is the project's standard.
 
-**Use the RAW key** (`LUNA_API_KEY_VIDEOLAB_RAW`) so PNG stays as PNG. The default Luna key (`LUNA_API_KEY`) converts to webp — Wan accepts webp, but other models in the kie.ai catalog (e.g., Kling 2.6) do not, so RAW gives you provider portability.
+**Upload input frames with `LUNA_KEY_VIDEOLAB`** — the ephemeral `video-lab` vault. It skips transcoding (PNG stays PNG) and auto-deletes after 24 h, which is exactly the lifetime an input frame needs. A per-client key (`LUNA_API_KEY`) converts images to webp: Wan tolerates that, but Veo and Kling reject it outright, so the ephemeral vault is what buys you provider portability.
 
-See [LUNA-CDN.md](LUNA-CDN.md) for the upload pattern.
+⚠ There is **no** `LUNA_API_KEY_VIDEOLAB_RAW`. Earlier revisions of this skill named it; it resolves to an empty string.
+
+See [LUNA-CDN.md](LUNA-CDN.md) for the upload pattern and the vault decision rule.
 
 ---
 
@@ -177,7 +179,7 @@ See [LUNA-CDN.md](LUNA-CDN.md) for the upload pattern.
 ## Polling pattern (Bash)
 
 ```bash
-KIE_API_KEY=$(grep '^KIE_API_KEY=' ~/.secrets/environment.d/11-secrets.conf | cut -d= -f2-)
+KIE_API_KEY="${KIE_API_KEY:?export it from your secrets store first}"
 TID="<taskId from submit>"
 
 # Poll

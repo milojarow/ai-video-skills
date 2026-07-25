@@ -1,27 +1,79 @@
 # Luna CDN — file hosting for video-lab
 
-Public URL hosting for the assets that downstream APIs (like Wan 2.6) need to fetch.
+Public URL hosting for the assets that downstream APIs (like Wan 2.6 or an OpenRouter video
+model) need to fetch.
 
 ---
 
 ## API basics
 
-**Base URL:** `https://luna.solutions45.com/api`
-**Auth:** `X-API-Key` header (per-key client identification)
+**Base URL:** `https://<your-luna-host>/api` — the host is per-deployment; keep it in
+`LUNA_BASE_URL` rather than hardcoding it.
+**Auth:** `X-API-Key` header. The key *is* the client identity — it selects which vault the
+upload lands in and which processing pipeline runs.
 
-**The two key types:**
+---
 
-| Env var | Behavior | Used by |
+## Keys and vaults
+
+> **`LUNA_API_KEY_VIDEOLAB_RAW` does not exist.** Earlier revisions of this skill told you to
+> use it "so PNG stays PNG". There is no such variable — exporting it gives you an empty
+> string, and the upload goes out unauthenticated or falls back to whatever key the shell
+> already had. The correct variable is **`LUNA_KEY_VIDEOLAB`**.
+
+| Env var | Vault | Behavior |
 |---|---|---|
-| `LUNA_API_KEY` (...4243) | **Converts images to .webp** on upload | a client web admin panel (multi-poster) |
-| `LUNA_API_KEY_VIDEOLAB_RAW` (...8b07) | **Preserves PNG / JPG** as uploaded — no webp conversion | video-lab uploads, especially for downstream models that don't accept webp |
+| **`LUNA_KEY_VIDEOLAB`** | the shared **`video-lab` client** — **ephemeral** | **No transcoding** (PNG stays `.png`) and uploads **auto-delete after 24 h** |
+| `LUNA_API_KEY` (per project, in that project's own env file) | that client's own vault | Images re-encoded to `.webp`; files are permanent |
+| `LUNA_ADMIN_API_KEY` | admin scope | Vault administration — not for uploads |
 
-Both point to the same Luna vault for the client; the second one is configured to skip the encoder.
+**Verify what a key points at** before trusting it:
 
-**Decision rule:**
-- If the next consumer of the upload accepts webp (Wan 2.6, Sora 2, Grok Imagine all do) → either key works.
-- If the next consumer only accepts JPG/PNG (Kling 2.6 only accepts JPG/PNG) → use **RAW**.
-- **Default in the video-lab pipeline: RAW**, for forward compatibility with any provider you might add later.
+```bash
+curl -sS "$LUNA_BASE_URL/me" -H "X-API-Key: $LUNA_KEY_VIDEOLAB"
+```
+
+The ephemeral client says so in its own response — "uploads bypass transcoding and
+auto-delete after 24h". That single call settles both questions (format preservation and
+retention) without a test upload.
+
+---
+
+## Decision rule: which vault for which asset
+
+**Input frames for generation → the `video-lab` ephemeral vault (`LUNA_KEY_VIDEOLAB`).**
+
+An image-to-video provider needs only one thing from you: a public URL it can fetch *right
+now*. The ephemeral vault gives exactly that, and nothing more:
+
+- **No format surprise** — the frame stays PNG, so format-strict models accept it.
+- **No cross-vault contamination** — a frame derived from one client's material never lands
+  in another client's vault; the one-vault-per-client rule stays intact.
+- **No accumulated garbage** — 24 h retention means a real client vault doesn't slowly fill
+  with throwaway intermediate frames.
+
+**Final deliverables → the client's own vault (`LUNA_API_KEY`).** That's where permanence is
+wanted. Note the asymmetry there: `.mp4` passes through untouched, but a `.jpg` poster
+**is** converted to `.webp`. Irrelevant for a `<video poster=…>` (browsers accept webp), but
+know it before you assume the extension you uploaded is the one you get back.
+
+**Do not reach for a third-party paste host** (throwaway file-drop services) to serve a PNG a
+model refused. It's an unnecessary exposure of client-derived material, and the ephemeral
+vault already solves the problem.
+
+---
+
+## Why the format matters: webp breaks half the i2v catalog
+
+| Model | webp input |
+|---|---|
+| Wan 2.6 (kie.ai) | ✅ accepted |
+| Veo 3.1 (OpenRouter) | ❌ `Unsupported image format. Expected JPEG or PNG` |
+| Kling 2.6 (kie.ai) | ❌ JPEG/PNG only |
+
+The failure mode is late and confusing: the upload succeeds, the URL resolves, and the
+*generation job* is what fails. Upload input frames with `LUNA_KEY_VIDEOLAB` and the whole
+class of error disappears.
 
 ---
 
@@ -35,8 +87,8 @@ POST /files/upload     # multipart/form-data
 - Max **500 MB** per file
 
 ```bash
-curl -sS -X POST https://luna.solutions45.com/api/files/upload \
-  -H "X-API-Key: $LUNA_API_KEY_VIDEOLAB_RAW" \
+curl -sS -X POST "$LUNA_BASE_URL/files/upload" \
+  -H "X-API-Key: $LUNA_KEY_VIDEOLAB" \
   -F "files=@image1.png" \
   -F "files=@image2.png" \
   -F "files=@image3.png"
@@ -46,13 +98,17 @@ curl -sS -X POST https://luna.solutions45.com/api/files/upload \
 
 ```json
 [
-  { "cdn_url": "https://cdn.solutions45.com/76bc307d-2adf-422e-8c9a-00efd94047c3.png" },
-  { "cdn_url": "https://cdn.solutions45.com/478ca451-1490-4e92-b90b-b589600dd6a5.png" },
-  { "cdn_url": "https://cdn.solutions45.com/95576ef0-08b0-4747-b5eb-b679b13d6dd5.png" }
+  { "cdn_url": "https://<your-luna-cdn-host>/<uuid-1>.png" },
+  { "cdn_url": "https://<your-luna-cdn-host>/<uuid-2>.png" },
+  { "cdn_url": "https://<your-luna-cdn-host>/<uuid-3>.png" }
 ]
 ```
 
-If a single file fails, that item carries `{ "error": "...", "original_name": "..." }` and the others succeed. **Always filter by presence of `cdn_url`** before assuming success.
+If a single file fails, that item carries `{ "error": "...", "original_name": "..." }` and the
+others succeed. **Always filter by presence of `cdn_url`** before assuming success.
+
+These URLs are passed verbatim to the provider's image input (Wan 2.6 `image_urls`, or an
+OpenRouter `frame_images[].image_url.url`).
 
 ---
 
@@ -60,23 +116,22 @@ If a single file fails, that item carries `{ "error": "...", "original_name": ".
 
 The returned `cdn_url`:
 
-- Lives at `cdn.solutions45.com` (separate from the upload endpoint)
+- Lives on the CDN host (separate from the upload endpoint)
 - **No auth.** Anyone with the URL can fetch.
 - **Stable for life** of the file (UUID-based; never rotates)
 - **Cached for 1 year** (`Cache-Control: public, max-age=31536000, immutable`)
 - **CORS open** (`*`)
 - **Supports range requests** — streaming and seek work
 
-For the video-lab pipeline, this means:
-- Upload once, reuse the URL
-- Submit to Wan 2.6 with the URL — kie.ai fetches it directly
-- The URL stays valid as long as the file isn't deleted
+Caveat for the ephemeral vault: "stable for life" is bounded by the 24 h auto-delete. Fine
+for a generation job that runs in minutes; **never** link an ephemeral URL from a delivered
+page.
 
 ---
 
-## Re-encoding behavior (default key only)
+## Re-encoding behavior (client vaults)
 
-The default `LUNA_API_KEY` re-encodes uploads:
+A normal client key re-encodes uploads:
 
 | Upload format | Stored as |
 |---|---|
@@ -85,9 +140,11 @@ The default `LUNA_API_KEY` re-encodes uploads:
 | mov, webm, mkv | `.mp4` (re-encoded H.264/AAC) |
 | pdf, txt, others | raw, untouched |
 
-**The `LUNA_API_KEY_VIDEOLAB_RAW` key skips the image re-encoding step**, so PNG stays PNG and JPG stays JPG. Video re-encoding is unaffected — both keys produce mp4 from mov/webm/mkv input.
+The **`video-lab` ephemeral client skips the whole encoder**, so PNG stays PNG and JPG stays
+JPG.
 
-**Don't infer the file extension from the upload name.** Always read `cdn_url` from the response — that's the canonical URL.
+**Don't infer the file extension from the upload name.** Always read `cdn_url` from the
+response — that's the canonical URL.
 
 ---
 
@@ -100,14 +157,16 @@ POST /files/<id>/replace      # multipart, field `file` (singular)
 ```
 
 ```bash
-curl -X POST "https://luna.solutions45.com/api/files/$ID/replace" \
-  -H "X-API-Key: $LUNA_API_KEY_VIDEOLAB_RAW" \
+curl -X POST "$LUNA_BASE_URL/files/$ID/replace" \
+  -H "X-API-Key: $LUNA_API_KEY" \
   -F "file=@new-image.png"
 ```
 
 Response: `{ "cdn_url": "..." }` — same URL, new content.
 
-⚠ **Cache busting:** the CDN serves with `max-age=31536000, immutable`. Browsers that already cached the old version keep showing it. Append a `?v=<timestamp>` query parameter in your `<img src>` / `<video src>` to bust.
+⚠ **Cache busting:** the CDN serves with `max-age=31536000, immutable`. Browsers that already
+cached the old version keep showing it. Append a `?v=<timestamp>` query parameter in your
+`<img src>` / `<video src>` to bust.
 
 ### Delete
 
@@ -116,40 +175,14 @@ DELETE /files/<id>
 ```
 
 Only the client owning the API key can delete a given file. Cross-client deletes return 403.
-
----
-
-## Production usage example (short-02)
-
-Upload three PNG images (segments 4, 5, 6 to be animated):
-
-```bash
-LUNA_KEY=$(grep '^LUNA_API_KEY_VIDEOLAB_RAW=' ~/.secrets/environment.d/11-secrets.conf | cut -d= -f2-)
-WS=~/video-lab/<topic>/<video-name>/<variant>
-
-curl -sS -X POST https://luna.solutions45.com/api/files/upload \
-  -H "X-API-Key: $LUNA_KEY" \
-  -F "files=@$WS/images/04-reflexiva.png" \
-  -F "files=@$WS/images/05-facturas.png" \
-  -F "files=@$WS/images/06-protegida.png"
-```
-
-Response (real, from short-02 production):
-```json
-[
-  {"cdn_url":"https://cdn.solutions45.com/76bc307d-2adf-422e-8c9a-00efd94047c3.png"},
-  {"cdn_url":"https://cdn.solutions45.com/478ca451-1490-4e92-b90b-b589600dd6a5.png"},
-  {"cdn_url":"https://cdn.solutions45.com/95576ef0-08b0-4747-b5eb-b679b13d6dd5.png"}
-]
-```
-
-These URLs are then passed verbatim to Wan 2.6's `image_urls` parameter.
+Ephemeral uploads need no delete — they expire on their own.
 
 ---
 
 ## What Luna **doesn't** offer
 
-- No `GET` for listing your uploaded files. The client app's database is the source of truth — persist `cdn_url` in your records when you upload.
+- No `GET` for listing your uploaded files. The consuming app's database is the source of
+  truth — persist `cdn_url` in your records when you upload.
 - No URL rotation (the UUID is permanent).
 - No folders or buckets — all files live flat by UUID.
 
@@ -160,9 +193,9 @@ These URLs are then passed verbatim to Wan 2.6's `image_urls` parameter.
 | Status | Cause |
 |---|---|
 | 400 | malformed request (missing field, unsupported format) |
-| 401 | missing or invalid `X-API-Key` header |
+| 401 | missing or invalid `X-API-Key` header — **including the empty-string case from exporting a variable that doesn't exist** |
 | 403 | trying to modify/delete another client's file |
-| 404 | file doesn't exist |
+| 404 | file doesn't exist — or an ephemeral upload aged past 24 h |
 | 413 | file >500 MB |
 
 ---
@@ -170,14 +203,20 @@ These URLs are then passed verbatim to Wan 2.6's `image_urls` parameter.
 ## Quick reference
 
 ```bash
-# Upload (single image, RAW key for video-lab)
-curl -sS -X POST https://luna.solutions45.com/api/files/upload \
-  -H "X-API-Key: $LUNA_API_KEY_VIDEOLAB_RAW" \
-  -F "files=@photo.png"
+# Which vault am I about to write to?
+curl -sS "$LUNA_BASE_URL/me" -H "X-API-Key: $LUNA_KEY_VIDEOLAB"
+
+# Upload an input frame for generation (ephemeral, PNG preserved)
+curl -sS -X POST "$LUNA_BASE_URL/files/upload" \
+  -H "X-API-Key: $LUNA_KEY_VIDEOLAB" \
+  -F "files=@frame.png"
+
+# Upload a final deliverable (client vault, permanent)
+curl -sS -X POST "$LUNA_BASE_URL/files/upload" \
+  -H "X-API-Key: $LUNA_API_KEY" \
+  -F "files=@final.mp4"
 
 # Delete
-curl -X DELETE "https://luna.solutions45.com/api/files/$UUID" \
-  -H "X-API-Key: $LUNA_API_KEY_VIDEOLAB_RAW"
+curl -X DELETE "$LUNA_BASE_URL/files/$UUID" \
+  -H "X-API-Key: $LUNA_API_KEY"
 ```
-
-For the full Luna onboarding doc (covers branded covers, advanced endpoints), see `~/pond/luna-cdn-client-onboarding.md`.
