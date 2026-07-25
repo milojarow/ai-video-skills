@@ -1,6 +1,6 @@
 ---
 name: video-asset-generation
-description: Generate the building blocks of a short video — images, voiceovers, music, SFX, and image-to-video animation — using kie.ai (Nano Banana 2 + Wan 2.6), ElevenLabs (TTS + Music + Sound Generation), and Luna CDN for hosting. Use this skill whenever the user asks to generate any video asset programmatically — "generate image", "make a voiceover", "TTS", "create music", "add SFX", "animate this image", "Wan 2.6", "kie.ai", "ElevenLabs", "Antonio voice", "Camila voice", "Marto voice", "image-to-video", "papercut style", "cinematic realism style", "Luna CDN", "subir asset", "upload to CDN", or any combination. Also triggers on questions about pricing, voice selection, prompt patterns for these tools, character consistency between generated images, or how to avoid known anti-patterns (Mexican stereotypes in prompts, sepia tones, lip movement on silent videos). The five reference files cover each provider in depth — read the one that matches the task.
+description: Generate the building blocks of a short video — images, voiceovers, music, SFX, and image-to-video animation — using kie.ai (Nano Banana 2 + Wan 2.6), OpenRouter video models (Veo 3.1, Hailuo, Sora, Grok Imagine), ElevenLabs (TTS + Music + Sound Generation), and Luna CDN for hosting. Use this skill whenever the user asks to generate any video asset programmatically — "generate image", "make a voiceover", "TTS", "create music", "add SFX", "animate this image", "Wan 2.6", "kie.ai", "OpenRouter video", "Veo 3.1", "i2v", "ElevenLabs", "Antonio voice", "Camila voice", "Marto voice", "image-to-video", "papercut style", "cinematic realism style", "Luna CDN", "subir asset", "upload to CDN", or any combination. Also triggers on questions about which video model is cheapest, video-model pricing, voice selection, prompt patterns for these tools, character consistency between generated images, or how to avoid known anti-patterns (Mexican stereotypes in prompts, sepia tones, lip movement on silent videos, webp input frames rejected by i2v models). The six reference files cover each provider in depth — read the one that matches the task.
 ---
 
 # Video Asset Generation
@@ -22,6 +22,7 @@ This skill is the **assets layer**. Composition (assembling the assets into a fi
 | **ElevenLabs Music** | Instrumental background music with controllable mood. | [MUSIC-SFX.md](MUSIC-SFX.md) |
 | **ElevenLabs Sound Generation** | Single-purpose SFX (heartbeat, page-turn, chime). | [MUSIC-SFX.md](MUSIC-SFX.md) |
 | **kie.ai Wan 2.6** | Image-to-video animation. 5/10/15s, 720p/1080p. | [ANIMATION.md](ANIMATION.md) |
+| **OpenRouter video** | Image-to-video across ~17 models (Veo 3.1, Hailuo, Wan, Sora, Grok). Usually 3-5× cheaper; arbitrary durations; real price catalog. | [OPENROUTER-VIDEO.md](OPENROUTER-VIDEO.md) |
 | **Luna CDN** | File hosting with stable public URLs. | [LUNA-CDN.md](LUNA-CDN.md) |
 
 ---
@@ -31,7 +32,8 @@ This skill is the **assets layer**. Composition (assembling the assets into a fi
 | Need | Provider | Notes |
 |---|---|---|
 | Static image (background, scene, CTA card) | kie.ai Nano Banana 2 | `aspect_ratio: 9:16`, `resolution: 1K`, output PNG |
-| Animated scene (motion in a static image) | kie.ai Wan 2.6 | Requires public URL of the source image, `duration: '5'`, `resolution: '1080p'` |
+| Animated scene (motion in a static image) | **Price both, then pick** | Requires a public PNG/JPEG URL either way. kie.ai Wan 2.6: `duration: '5'` enum, `resolution: '1080p'`. OpenRouter: free-form `duration`, typically 3-5× cheaper — query `GET /api/v1/videos/models` for today's prices |
+| Subtle motion only (camera push, breath, light shift) | OpenRouter cheap tier | Don't pay for acting and physics the segment never shows |
 | Spoken narration | ElevenLabs TTS | `eleven_multilingual_v2`, `language_code: es` for Mexican Spanish |
 | Background music | ElevenLabs Music | Always `force_instrumental: true` so it doesn't fight the voice |
 | One-shot SFX (heartbeat, click, chime) | ElevenLabs Sound Generation | Single sound, brief (0.5-2s) |
@@ -76,6 +78,7 @@ The QA validator pays off as **fan-out**: with several images, parallel validato
 | Wan 2.6 image-to-video (1080p, 5s) | $0.53 | 5s minimum |
 | Wan 2.6 image-to-video (1080p, 10s) | $1.05 | |
 | Wan 2.6 image-to-video (1080p, 15s) | $1.58 | |
+| OpenRouter cheap-tier i2v (1080p) | ~$0.05/s | ~$0.40 for 8s — 3× cheaper than Wan 2.6 for equivalent output (snapshot 2026-07-25; always re-query the catalog) |
 | ElevenLabs TTS (per character) | varies by plan | ~$0.005 for short pre-tests |
 | ElevenLabs Music (30s instrumental) | ~$0.05 | |
 | ElevenLabs Sound Gen (1-2s) | ~$0.01 | |
@@ -97,6 +100,8 @@ These are mistakes already made and fixed — don't repeat them:
 | Generate Wan video without checking script timing | If segment is <5s, you waste 33%+ of the cost | Either rewrite script segments to be ~4.5-5s, or use `data-media-start` to pick a different slice |
 | Upload an i2v input frame with a per-client `LUNA_API_KEY` | It converts to webp; Veo 3.1 and Kling 2.6 then reject the job with `Unsupported image format` — and the frame pollutes a client's permanent vault | Upload input frames with `LUNA_KEY_VIDEOLAB` (ephemeral vault, no transcoding) |
 | Export `LUNA_API_KEY_VIDEOLAB_RAW` | **That variable does not exist** — it resolves to an empty string and the upload goes out with no key or the wrong one | The real variable is `LUNA_KEY_VIDEOLAB`; confirm with `GET /api/me` before uploading |
+| Assume a video model's price from the general model catalog | Video models report `pricing: {prompt:"0", completion:"0"}` there because they aren't token-billed — the zero is meaningless | Read prices from `GET /api/v1/videos/models`, every time |
+| Treat kie.ai Wan 2.6 as the only i2v option | It's among the pricier routes to 1080p; you can silently pay 3-5× | Compare against [OPENROUTER-VIDEO.md](OPENROUTER-VIDEO.md) before submitting |
 | Skip pre-test of brand-name pronunciation | Antonio likes "AcmeSeguros" together; Camila prefers "Acme Seguros" with space — assumption costs a re-render | Always pre-test 2 variants ($0.005), pick the natural one |
 | Use Camila for VOs >20 seconds | Voice goes "lazy" toward the end (validated short-02) | Marto for longer VOs; Camila for shorter (<15s) ones where her warmth shines |
 
@@ -127,7 +132,7 @@ Both have working `build-composition.mjs` scripts that generate `index.html` fro
 
 ## When in doubt
 
-- Check the specific reference file ([IMAGES.md](IMAGES.md), [VOICES.md](VOICES.md), [ANIMATION.md](ANIMATION.md), [MUSIC-SFX.md](MUSIC-SFX.md), [LUNA-CDN.md](LUNA-CDN.md))
+- Check the specific reference file ([IMAGES.md](IMAGES.md), [VOICES.md](VOICES.md), [ANIMATION.md](ANIMATION.md), [OPENROUTER-VIDEO.md](OPENROUTER-VIDEO.md), [MUSIC-SFX.md](MUSIC-SFX.md), [LUNA-CDN.md](LUNA-CDN.md))
 - For composition assembly, pivot to `video-composition` skill
 - For caption styling, pivot to `video-captions` skill
 - For workspace setup or Node 22 + sharp issues, pivot to `video-edit-setup` skill

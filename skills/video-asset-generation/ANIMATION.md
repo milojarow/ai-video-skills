@@ -2,6 +2,12 @@
 
 Animate a static image with cinematic motion. Used in short-02 for 3 segments. The single most expensive line item in a typical short — plan it carefully.
 
+> **Check the other provider first.** OpenRouter exposes ~17 video models through one async
+> endpoint, usually at 3-5× lower cost for equivalent 1080p i2v, and unlike kie.ai it has a
+> real catalog endpoint you can query for current prices. See
+> [OPENROUTER-VIDEO.md](OPENROUTER-VIDEO.md). This file remains accurate for Wan 2.6 on
+> kie.ai; the prompt patterns and efficiency math below apply to both.
+
 ---
 
 ## API basics
@@ -40,7 +46,9 @@ Animate a static image with cinematic motion. Used in short-02 for 3 segments. T
 
 (Top-up bonuses bring effective prices down ~10%.)
 
-**Standard for this project: 1080p, 5s = $0.53 per video.**
+**Standard on kie.ai: 1080p, 5s = $0.53 per video.** Note this is *not* the cheapest route to
+1080p i2v — a comparable OpenRouter clip runs closer to $0.05/s. Price the job on both before
+committing ([OPENROUTER-VIDEO.md](OPENROUTER-VIDEO.md)).
 
 ---
 
