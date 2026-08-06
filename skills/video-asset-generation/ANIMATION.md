@@ -37,6 +37,44 @@ Animate a static image with cinematic motion. Used in short-02 for 3 segments. T
 
 ---
 
+## Does the model exist? Read *which* error you got
+
+kie.ai answers with a `422` for two completely different problems, and only one of them means
+the model name is wrong:
+
+| Response `msg` | What it actually means |
+|---|---|
+| `The model name you specified is not supported. Please verify your input and use one of the supported models provided by KIE.` | **The model really doesn't exist.** Only this message proves it. |
+| Any complaint about the input fields — `aspect_ratio is required for text-to-video`, `This field is required` | **The model exists.** Your input is malformed. A validation error is proof the model name passed the gate. |
+
+**The trap that makes a real model look fake:** when the image field is missing or misspelled,
+kie.ai classifies the job as *text-to-video* and replies `aspect_ratio is required for
+text-to-video` — even though you asked for image-to-video. That reads like "it didn't recognise
+your model", and it means the exact opposite: it recognised the model and couldn't find the
+image.
+
+**Rule — before declaring a kie.ai model nonexistent:**
+
+1. Read the exact `msg`. Only `"model name ... not supported"` proves nonexistence.
+2. Open `https://docs.kie.ai/market/<family>/<task>` before guessing field names. kie.ai has no
+   catalog endpoint to enumerate models ([OPENROUTER-VIDEO.md](OPENROUTER-VIDEO.md)), but it
+   does publish a page per model.
+
+Guessing field names costs one billed call per attempt and doesn't converge; the doc page takes
+30 seconds.
+
+### Verified image-input field names
+
+The image field is not spelled the same way across models — it isn't even the same *shape*:
+
+| Model | Image input field |
+|---|---|
+| `wan/2-6-image-to-video` (kie.ai) | `image_urls` — **array**, max 1 URL |
+| `minimax-h3/image-to-video` (kie.ai) | `first_frame_url` — **string**; optional `last_frame_url` pins the ending frame |
+| OpenRouter video models | `frame_images[].image_url.url` + `frame_type: "first_frame"` — see [OPENROUTER-VIDEO.md](OPENROUTER-VIDEO.md) |
+
+---
+
 ## Pricing (verified 2026-05-09)
 
 | Resolution | 5s | 10s | 15s |
