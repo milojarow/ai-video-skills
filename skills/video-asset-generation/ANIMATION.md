@@ -139,6 +139,59 @@ Always include:
 - `"No lip movement. Subjects remain silent throughout."` — only when humans are visible
 - `"Vertical 9:16 cinematic framing."` — locks the orientation
 
+### Objects that must stay recognisable: forbid rotation *by name*
+
+i2v models read "rotating gently on its own axis", "slowly" and "subtle" as permission to spin.
+Measured on one first frame animated for 8 s, the objects completed a full 360°: their
+silhouette dropped to **23% of the starting width**, and **44% of the frames** sat below the
+legibility threshold. When the object *is* the message — a product, one icon per service — that
+is a **content** failure, not a style one: for half the loop the hero subject is a shapeless
+smear.
+
+Softness words don't reach. Name the prohibition:
+
+> The objects inside DO NOT ROTATE and DO NOT TURN. Each keeps exactly the same orientation as
+> in the first frame, facing the camera, fully recognisable at every single moment.
+
+Then state what *is* allowed to move, and nothing else:
+
+> Extremely subtle motion only. The `<subjects>` float and bob very gently in place. […]
+> What moves, and nothing else: the gentle vertical bob, soft specular highlights sliding
+> across the glass, and the caustic shadows shifting on the floor.
+
+Two details that made it hold on the re-run:
+
+1. **Enumerate object by object what each one does not do** — "the phone stays flat and front
+   facing", "the globe does not spin". A model generalises badly from a single abstract
+   prohibition.
+2. **Shorten the clip** (8 s → 6 s). Less room to drift.
+
+Same model, same first frame, prompt-only change:
+
+| Run | Glass / refraction | Worst object silhouette | Output |
+|---|---|---|---|
+| `minimax-h3/image-to-video` (kie.ai), "subtle motion / gently" | better | ❌ 23% — 44% of the loop illegible | 2944×1248 |
+| A second-provider i2v model, same frame | paler edges | ✅ 89% | 2176×928 |
+| `minimax-h3/image-to-video` + anti-rotation prompt | better | ✅ **99%** | 2944×1248 |
+
+**The fix is the prompt, not a different model.** The model with the better glass was also the
+one that spun the objects; with rotation forbidden it won both columns. Write the prohibition on
+the *first* attempt — i2v retries are billed, and a run can die mid-iteration on
+`{"code":500,"msg":"Credits insufficient"}`.
+
+### Measuring rotation without eyeballing it
+
+A 4-frame contact sheet only hints; this proves it. Crop the object's region, count the width of
+its silhouette frame by frame, compare against frame 0 — **an object that turns gets narrower.**
+Below 80% of the starting width it already reads badly.
+
+```python
+cols = [x for x in range(W) if min(px[x, y] for y in range(0, H, 3)) < 150]
+width = max(cols) - min(cols)      # as a % of the same measure on frame 0
+```
+
+That gives the exact percentage of the loop that's ruined instead of a judgement call.
+
 ### Real prompts from short-02
 
 **Seg 4 — protagonist alone, contemplative:**
