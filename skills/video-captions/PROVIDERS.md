@@ -4,6 +4,73 @@ Deep reference for choosing and using each provider. Read this when deciding whi
 
 ---
 
+## First: is this audio yours? Then don't transcribe it at all
+
+**If you synthesized the audio with ElevenLabs TTS, the alignment already exists — asking an STT model for it is asking a second model to guess what the first one said.**
+
+Use the timestamped TTS endpoint instead of generating and then transcribing:
+
+```
+POST https://api.elevenlabs.io/v1/text-to-speech/{voice_id}/with-timestamps
+```
+
+Same request body as normal TTS. The response is JSON carrying `audio_base64` **plus** `alignment`:
+
+```json
+{
+  "audio_base64": "...",
+  "alignment": {
+    "characters": ["T","u"," ","n","e","g","o"],
+    "character_start_times_seconds": [0.0, 0.081, 0.139],
+    "character_end_times_seconds":   [0.081, 0.139, 0.174]
+  }
+}
+```
+
+That is the character-by-character alignment **of the audio just synthesized** — the data the model generated the audio from, not an estimate of it.
+
+**Why this is strictly better, not just shorter:** the round-trip through STT costs an extra call, adds latency, and *can mishear* precisely where it hurts most — figures, brand names, spelled-out acronyms. A karaoke caption misaligned on the brand name is the worst possible place for an error.
+
+### Characters → words
+
+A word is a run of non-space characters: it spans from the start of the first to the end of the last.
+
+```python
+def words_from_characters(alignment, base=0.0):
+    chars = alignment["characters"]
+    starts = alignment["character_start_times_seconds"]
+    ends   = alignment["character_end_times_seconds"]
+    words, current, t0, prev_end = [], "", None, 0.0
+    for c, a, b in zip(chars, starts, ends):
+        if c.strip() == "":
+            if current:
+                words.append({"text": current, "start": base + t0, "end": base + prev_end})
+                current, t0 = "", None
+            continue
+        if not current:
+            t0 = a
+        current += c
+        prev_end = b
+    if current:
+        words.append({"text": current, "start": base + t0, "end": base + prev_end})
+    return words
+```
+
+`base` is the beat's offset within the global timeline, when synthesizing line by line.
+
+This yields two things at once and for free: the caption groups **and** the animation cues tied to words ("this element enters when the voice names it" — see `video-composition/MULTI-BEAT.md`).
+
+### The routing rule
+
+| Audio origin | Use |
+|---|---|
+| **Your own TTS** (synthesized in this pipeline) | `/v1/text-to-speech/{voice_id}/with-timestamps` |
+| **Anyone else's audio** — real recordings, interviews, a human voice actor, archive material | Whisper or Scribe, below. No prior alignment exists; transcription is the only option. |
+
+**Plumbing note:** the HyperFrames Python bridge to ElevenLabs requires the `elevenlabs` package installed. This endpoint over plain REST + `curl` does the same with zero dependencies — and additionally exposes the alignment, which the bridge does not.
+
+---
+
 ## OpenAI Whisper API
 
 ### Endpoint
@@ -46,9 +113,9 @@ POST https://api.openai.com/v1/audio/transcriptions
 
 2. **Phantom words (zero duration).** Occasionally `start == end` for a real word. ~10 in a 51s clip in our test. Resolve via split-forward (see PIPELINE.md).
 
-3. **Proper nouns it has never seen are wrong.** "Ahuja" → "Abuja" without prompt; with prompt, recovers. The prompt is the cleanest fix for known proper nouns.
+3. **Proper nouns it has never seen are wrong.** An unfamiliar surname comes back as a similar-sounding word it does know (`<surname>` → a near-homophone) without a prompt; with the prompt, it recovers. The prompt is the cleanest fix for known proper nouns.
 
-4. **The `mcp__whisper__transcribe_audio` MCP server (the wrapper at `~/.secrets/mcp/whisper.sh`) does NOT pass `response_format` or `timestamp_granularities`.** It only returns plain text. For word-level captions, **call the API directly with curl**, not through the MCP. (Future improvement: patch the MCP server to accept these parameters.)
+4. **The `mcp__whisper__transcribe_audio` MCP server (the usual shell wrapper) does NOT pass `response_format` or `timestamp_granularities`.** It only returns plain text. For word-level captions, **call the API directly with curl**, not through the MCP. (Future improvement: patch the MCP server to accept these parameters.)
 
 ### Cost
 ~$0.006 USD/min. Cheapest production-grade option.
@@ -76,7 +143,7 @@ POST https://api.elevenlabs.io/v1/speech-to-text
 | `model_id` | `scribe_v1` | Verified working. `scribe_v2` may exist; not tested. |
 | `language_code` | ISO-639-3 (`spa`, `eng`, ...) | **Three-letter codes**, not the two-letter ISO-639-1 Whisper uses. |
 | `tag_audio_events` | `false` | Default `true` includes `[music]`, `[laughter]`, etc. Set `false` for clean captions. |
-| `biased_keywords` | `Ahuja:5` (optional) | Bias toward specific words. **Did not work for proper nouns in our test** — Scribe still output "Aguja". Treat as unreliable. |
+| `biased_keywords` | `<surname>:5` (optional) | Bias toward specific words. **Did not work for proper nouns in our test** — Scribe still output the near-homophone. Treat as unreliable. |
 | `additional_formats` | `["srt"]`, etc. (optional) | Returns formatted exports alongside JSON. Useful only for direct SRT delivery. |
 | `diarize` | `true` (optional) | Speaker diarization. Not relevant for single-speaker captions. |
 
@@ -114,7 +181,7 @@ The build script in PIPELINE.md auto-detects which provider via shape.
 
 2. **No phantom words.** In our test, Scribe emitted 0 zero-duration words vs Whisper's ~10. The phantom-resolution code is still good to have (defensive), but in practice triggers only for Whisper.
 
-3. **`biased_keywords` doesn't fix proper nouns.** Tested with `Ahuja:5` — Scribe still said "Aguja". Use post-processing `VOCAB_FIXES` instead.
+3. **`biased_keywords` doesn't fix proper nouns.** Tested by biasing an unfamiliar surname at weight 5 — Scribe still returned the near-homophone. Use post-processing `VOCAB_FIXES` instead.
 
 4. **Skips words occasionally.** In our test, Scribe omitted the conjunction "y" from "planear tu retiro y disfrutar de una vejez". No general fix — needs human review of transcripts before final render. (Whisper had its own omission: "ahorro" disappeared in a different sentence. Both providers have this failure mode at low rates.)
 

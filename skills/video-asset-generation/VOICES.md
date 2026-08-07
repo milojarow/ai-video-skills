@@ -204,4 +204,4 @@ curl -sS "https://api.elevenlabs.io/v1/text-to-speech/$VOICE?output_format=mp3_4
   -o voiceover.mp3
 ```
 
-After generating: transcribe with Scribe (`/v1/speech-to-text`) to get word timestamps for caption alignment. See `video-captions/PROVIDERS.md`.
+**Don't transcribe your own voiceover.** To get word timestamps for caption alignment, synthesize through `/v1/text-to-speech/{voice_id}/with-timestamps` instead — it returns the audio *and* its character-level alignment in one call, exactly as generated rather than re-estimated. Scribe (`/v1/speech-to-text`) is for audio you did **not** synthesize. See `video-captions/PROVIDERS.md`.
