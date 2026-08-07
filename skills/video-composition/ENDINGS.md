@@ -149,7 +149,7 @@ tl.set("#fade-out", { opacity: 0 }, 0)
 
 Without it: the last frame holds at full brightness, then suddenly the video is over. On a phone, this feels like the video buffered or crashed.
 
-With it: the fade signals "this is intentional" and gives the viewer 1 second to digest the URL/CTA before the closure. Validated as essential — short-02 user feedback was *"el final es muy brusco"* before adding the fade.
+With it: the fade signals "this is intentional" and gives the viewer 1 second to digest the URL/CTA before the closure. Validated as essential — review feedback consistently flags the un-faded version as ending too abruptly.
 
 ---
 

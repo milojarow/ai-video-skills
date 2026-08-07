@@ -146,7 +146,7 @@ Regeneration cost: ~$0.02 per image. Cheap insurance against shipping bad output
 
 ## Background removal eats transparent subjects — if you know the silhouette, build the alpha
 
-**Symptom:** assets cut out of a single frame come back with "a horrible transparent square background that covers the others". The subject is supposed to be the shape alone, but in composition each asset occludes whatever is behind it.
+**Symptom:** assets cut out of a single frame come back carrying a near-transparent square background that covers the others. The subject is supposed to be the shape alone, but in composition each asset occludes whatever is behind it.
 
 Measured on six glass spheres (each with an object inside) cut from one frame and passed through `hyperframes remove-background` — this applies to any subject-matting model:
 
