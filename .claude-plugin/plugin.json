@@ -1,6 +1,6 @@
 {
   "name": "ai-video-skills",
-  "version": "0.5.9",
+  "version": "0.5.10",
   "description": "Expert skills for producing short videos for social platforms (WhatsApp Stories, IG Reels, FB Stories) with kie.ai (image gen + Wan 2.6 image-to-video animation), ElevenLabs (TTS + Music + SFX + Scribe), Luna CDN, and HyperFrames composition. Karaoke + TikTok-pop captions included.",
   "author": {
     "name": "milojarow",

@@ -46,3 +46,34 @@ Derived from comparing a project that renders clean against one that doesn't, pl
 **Anti-pattern (tried, breaks the render):** beats overlapping by 0.45s on alternating tracks + staggered z-index + internal covers per beat + empty root timeline. Looks perfect in Studio (isolated iframes); in render it produces beats visible outside their window and undirected timelines.
 
 **Audio in the root:** every `<audio>` needs an EXPLICIT `data-duration` — without it the preview/lint treats it as "until the end" and reports false overlaps on the same track (and playback can overlap). `data-media-start` works to trim the music intro (e.g. skip 2s so the resolved ending lands on the video's close) — though pre-processing the file with ffmpeg (a pre-faded copy) is the most bulletproof.
+
+---
+
+## The last beat needs a tail AFTER the last word
+
+Complements [ENDINGS.md](ENDINGS.md), which documents the fade-to-black itself. This is **why an ending still feels abrupt even when the fade is already in place** in a multi-beat build.
+
+**The mechanism:** the natural thing is to set each beat's `data-duration` to the duration of its voiceover line. That's correct for every beat **except the last** — there the video ends exactly on the final syllable, so the fade either overlaps the last word or gets cut off. The fade wasn't missing; it had **nowhere to live**.
+
+**The fix:** last beat `data-duration` = voiceover duration **+ ~1.0s of tail**. Every other beat keeps measuring its own line.
+
+```
+01 = 6.362   ← voice
+02 = 3.344   ← voice
+...
+06 = 2.579   ← 1.579 voice + 1.000 tail
+```
+
+In that tail the brand sits alone on screen and the fade runs to completion. One second sounds like nothing, and it is exactly what separates a closing from a cut.
+
+**Verify the tail actually exists** by measuring audio decay at three points, not by watching:
+
+```
+30.2 s  −18.6 dBFS   brand alone, audio still present
+31.2 s  −45.7 dBFS   mid-decay
+31.7 s  −56.2 dBFS   last frame, effectively silent
+```
+
+Three descending numbers = there is a tail. If the last frame is still near programme level, the video cuts off no matter what the black overlay says.
+
+**5-second check:** `MP4 total` − `sum of voiceover durations` ≈ the tail you intended. If it comes out ~0, the last beat is glued to the last word.
