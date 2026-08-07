@@ -7,7 +7,7 @@ Static image generation for video segments. The standard model used in this proj
 ## API basics
 
 **Endpoint:** `POST https://api.kie.ai/api/v1/jobs/createTask`
-**Auth:** `Authorization: Bearer ${KIE_API_KEY}` (in `~/.secrets/environment.d/11-secrets.conf`)
+**Auth:** `Authorization: Bearer ${KIE_API_KEY}` (sourced from your secrets store)
 
 **Request body:**
 ```json
@@ -141,6 +141,50 @@ After downloading images, do a visual scan. Regenerate any that:
 - Have visible **artifacts** (extra fingers, distorted faces, weird text)
 
 Regeneration cost: ~$0.02 per image. Cheap insurance against shipping bad output.
+
+---
+
+## Background removal eats transparent subjects — if you know the silhouette, build the alpha
+
+**Symptom:** assets cut out of a single frame come back with "a horrible transparent square background that covers the others". The subject is supposed to be the shape alone, but in composition each asset occludes whatever is behind it.
+
+Measured on six glass spheres (each with an object inside) cut from one frame and passed through `hyperframes remove-background` — this applies to any subject-matting model:
+
+| Assets | Result |
+|---|---|
+| 3 of 6 | correct |
+| one | **0.1% opaque pixels** — erased everything |
+| one | **2.3% opaque** — left a ghost |
+| one | kept ONLY the inner object and threw away the sphere |
+
+The pattern: **the model reads glass as background.** The smaller the encapsulated object is relative to the sphere, the more the whole sphere looks like "background" to it. And because it returns a PNG with a *valid* alpha channel, everything downstream accepts it — you get near-transparent squares that occlude their neighbours.
+
+### The fix: don't ask a model for an alpha you can derive
+
+If the subject's silhouette is a **known shape**, construct it. For a glass sphere the reasoning closes on itself: the glass rim **is** the circle's edge, so the sphere's bounding box is the crop's bounding box. The alpha is a filled circle at the inscribed radius, with ~1px feather so it isn't aliased:
+
+```python
+from PIL import Image, ImageDraw, ImageFilter
+n = img.size[0]                       # square crop
+mask = Image.new("L", (n*4, n*4), 0)  # 4× supersample for antialiasing
+ImageDraw.Draw(mask).ellipse([0, 0, n*4-1, n*4-1], fill=255)
+mask = mask.resize((n, n), Image.LANCZOS).filter(ImageFilter.GaussianBlur(1))
+img.putalpha(mask)
+```
+
+Milliseconds, deterministic, and structurally incapable of eating the subject.
+
+### The referee (cheap and decisive)
+
+**Percentage of pixels with alpha > 0, per asset.** Every asset in the same family must yield **the same number**. In the run above all six landed at **64.8%** (a full inscribed circle would be π/4 = 78.5%; 64.8% because the sphere doesn't fill the frame). An asset that falls outside the family is an asset the matting destroyed — visible as a number, without opening a single image.
+
+### Related trap: `PIL.Image.crop()` pads with BLACK
+
+Anything outside the source image's bounds comes back **black**, not transparent. If an object's crop runs off the edge and you paste it as-is, every asset carries a black frame — and with a geometric alpha on top, that black is invisible in the thumbnail but reappears when composited over a light background. Clamp the crop to the real bounds and paste at the corresponding offset.
+
+### The rule
+
+Before sending an asset to a background remover, ask: **do I know the silhouette?** If yes (circle, rectangle, frame, a tile cut from a regular grid), build the alpha. Matting models are for silhouettes you can't describe — a person, an irregular product, hair.
 
 ---
 
