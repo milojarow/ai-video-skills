@@ -58,6 +58,60 @@ Ask three questions about the script:
 
 ---
 
+## Casting a new voice — measure to shortlist, one file for the human to decide
+
+Picking a replacement voice (or a voice for a new campaign) is two steps that get confused for one: **Claude narrows the field by measurement, the human picks by ear.** Both steps have a documented failure mode.
+
+### Step 0 — enumerate BOTH libraries, or the casting is invalid
+
+There are two places a voice can live, and searching only one silently loses the best candidate:
+
+| Source | How to reach it |
+|---|---|
+| The **account's own library** — already curated, the voices someone deliberately saved | `GET /v1/voices` with the account's `ELEVENLABS_API_KEY` |
+| The **shared/community Voice Library** | the library search endpoint |
+
+A casting run that queried only the shared library produced six candidates and missed the voice that was ultimately chosen — it lived in the account's own library, correctly labelled for the use case (`female · mexican · advertisement · professional`). **Enumerate `/v1/voices` before synthesizing a single candidate.**
+
+### Step 1 — measure, because the catalog label doesn't decide
+
+ElevenLabs has no "energetic" descriptor for es-MX, so the catalog blurb is not a filter. Synthesize **two** lines per candidate — a short hook *and* a ~10s enumeration, because the fatigue defect only shows up on the long one — and measure four things:
+
+| Metric | What it catches |
+|---|---|
+| Pitch range (semitones, p10→p90) | Flat voice = boring |
+| Syllables / second | Actual energy, not an adjective |
+| Peak RMS | **The known failure mode**: quiet voice gets drowned by the music bed |
+| Duration | How much the timeline moves if the voice is swapped later (see `video-composition/MULTI-BEAT.md`) |
+
+Shape of a real six-candidate run (long line):
+
+```
+  cand-A    10.40s  4.2 syl/s   8.9 st   RMS -13.5 dB
+  cand-B     9.01s  4.9 syl/s   9.0 st   RMS -19.6 dB
+  cand-C     9.20s  4.8 syl/s  13.4 st   RMS -22.1 dB
+  cand-D     7.71s  5.7 syl/s   5.1 st   RMS -19.8 dB
+  cand-E    10.40s  4.2 syl/s  11.6 st   RMS -20.3 dB
+  cand-F    12.03s  3.7 syl/s   6.1 st   RMS -24.9 dB
+```
+
+Peak RMS is the column that matters most here: the deprecation above happened because a voice was too quiet to survive the music bed. A candidate ~10 dB below its peers will reproduce that exact problem.
+
+**The measurement does not choose — it filters.** Six candidates down to three or four finalists; the decision is still by ear.
+
+### Step 2 — deliver ONE audition file, not a pile of attachments
+
+Sending N separate audio files is not an audition: it forces download, a player, remembering which was which, and comparing against the previous one from memory. The delivery that works:
+
+- **One file, ~50s, that plays straight through.**
+- Each finalist **says its own name** first, then reads the same line. That removes the mental bookkeeping — the answer comes back as "the second one" without re-opening a list.
+- **Mixed with the music bed at production level, not dry.** Auditioning dry hides the exact defect being screened for (the voice being buried), which is the whole reason for the peak-RMS column.
+- Include the command to play it.
+
+**Cost:** six candidates × two lines ≈ $0.06. A full casting run costs less than regenerating one wrong voiceover — and far less than a voice swap after the composition is built.
+
+---
+
 ## Pre-test pattern (mandatory)
 
 **Always pre-test the brand name before generating the full voiceover.**
@@ -86,7 +140,7 @@ curl -sS "https://api.elevenlabs.io/v1/text-to-speech/$VOICE?output_format=mp3_4
 
 **Cost:** ~$0.01 total for both variants. Saves $0.05+ if you'd otherwise need to regenerate the full VO.
 
-**Listen and pick.** The user does this — Claude can't audition audio.
+**Listen and pick.** The user does this — Claude can't audition audio. Hand it over as a single playable file, not as loose attachments: see "Casting a new voice" above for the delivery format.
 
 **Production findings:**
 - Antonio prefers **joined** ("AcmeSeguros")
@@ -130,7 +184,7 @@ But change one variable at a time.
 
 | Error | Cause | Fix |
 |---|---|---|
-| `401 Unauthorized` | `ELEVENLABS_API_KEY` missing or wrong | Source `~/.secrets/environment.d/11-secrets.conf`, verify with `echo $ELEVENLABS_API_KEY` |
+| `401 Unauthorized` | `ELEVENLABS_API_KEY` missing or wrong | Source it from your secrets store, verify with `echo $ELEVENLABS_API_KEY` |
 | Voice sounds completely different from expected | Wrong voice_id | Check the URL — `voice_id` goes in the path, not body |
 | Output very short (<5 KB) | Empty `text` field or filter rejection | Verify the JSON body has the text correctly |
 | Pronunciation of brand name is awkward | Voice's tokenization of compound words | Pre-test pattern (see above), pick the natural form |
