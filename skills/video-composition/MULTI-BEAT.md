@@ -77,3 +77,52 @@ In that tail the brand sits alone on screen and the fade runs to completion. One
 Three descending numbers = there is a tail. If the last frame is still near programme level, the video cuts off no matter what the black overlay says.
 
 **5-second check:** `MP4 total` − `sum of voiceover durations` ≈ the tail you intended. If it comes out ~0, the last beat is glued to the last word.
+
+---
+
+## Changing the voice invalidates EVERY baked timing — and the render reports zero errors
+
+A finished, approved 6-beat video; the voice is swapped (say male → female). Regenerate the voiceover, re-render, and everything comes back clean — `lint` 0 errors, `check` passes, contrast 24/24, valid MP4. **And it is out of sync end to end.** Nothing fails because nothing *can* fail: the timings are literal numbers in the code, and a number is always a valid number.
+
+### You cannot fix it with a global scale factor
+
+The first instinct — "scale everything by new-total over old-total" — is wrong. Two es-MX voices, SAME script, measured:
+
+| Line | Voice A | Voice B | Delta |
+|---|---|---|---|
+| 1 | 4.23s | 6.36s | **+2.14** |
+| 2 | 3.31s | 3.34s | +0.03 |
+| 3 | 10.49s | 10.08s | **−0.42** |
+| 4 | 5.02s | 5.57s | **+0.56** |
+| 5 | 3.92s | 3.95s | +0.03 |
+| 6 | 1.61s | 1.58s | −0.03 |
+
+It isn't a scaling: **one line stretches 2s while another shrinks half a second.** Each voice breathes differently depending on punctuation and phrase length. There is no global factor.
+
+### What has to be repatched, in order
+
+Everything hand-derived from the old voice's alignment:
+
+1. **Each beat root's `data-duration`** — from the new WAV duration.
+2. **Cue tables inside a beat** — every element that enters "when the voice says X" (`{ k:"pos", t:1.92 }` → `t:1.78`). Re-derive from the *word*, never from the old number.
+3. **Word-by-word hits** (underlines, highlights, counters) — in one beat, eight of them moved between +0.07 and +1.90s.
+4. **Music fade and trim** — `afade out` is relative to the new total.
+5. **Caption groups** — rebuilt from the new alignment (`video-captions/PROVIDERS.md`).
+6. **Transitions** — reinject; the boundaries moved.
+
+### The prevention, which is the part that matters
+
+**Every cue derived from a word carries a comment naming the voice and the word, and keeps the old values written down.** Without it, the next session has no way to know those `1.78`s aren't decoration:
+
+```js
+// ⚠️ These times are bound to voice <name>. Changing the voice actor invalidates
+// them and the render will NOT complain. Re-derive from each word's onset.
+// Previous voice <other name>: 0.00 / 1.92 / 2.97 / 4.44 / 5.19 / 6.64
+var CUES = [ {k:"ia", t:0.00}, {k:"pos", t:1.78}, ... ];
+```
+
+Derive onsets from the TTS alignment rather than typing seconds — see `video-captions/PROVIDERS.md` (`/with-timestamps`).
+
+### The 5-second check that catches it
+
+Before accepting a voice swap: sum the new WAV durations and compare against the sum of the `data-duration`s. If they don't match, there are unpatched cues — and no linter is going to tell you.

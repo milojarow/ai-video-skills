@@ -62,7 +62,7 @@ The cursor has a CSS-only blink (no GSAP needed for that).
 ```javascript
 const URL_TEXT = "acmeseguros.com";
 const URL_TYPE_DURATION = 1.5;            // total time to type all chars
-const URL_TYPE_BEGIN = 18.60;             // sync with voiceover saying the URL
+const URL_TYPE_BEGIN = 18.60;             // ⚠️ bound to the CURRENT voice — derive, don't type
 
 const urlChars = URL_TEXT.split("");
 const charDur = URL_TYPE_DURATION / urlChars.length;
@@ -83,7 +83,7 @@ Each character is appended in sequence. `tl.call(...)` registers a function call
 | Knob | Default | Notes |
 |---|---|---|
 | `URL_TYPE_DURATION` | 1.5s | Should match the voiceover's pronunciation speed of the URL. Speed up (1.2s) if the voice says it fast |
-| `URL_TYPE_BEGIN` | sync with the VO timestamp where the brand/URL is spoken | Find the timestamp from `voiceover-scribe.json` |
+| `URL_TYPE_BEGIN` | sync with the VO timestamp where the brand/URL is spoken | **Derive it from the word's onset in the TTS alignment — don't type the second.** A hand-typed value silently breaks on any voice change; see `MULTI-BEAT.md`. |
 | Font size | 72px | Big enough for phone screens but not overwhelming. 60-80px range |
 | Top position | 60% (slightly below center) | Avoids covering the bottom-left/right where watermark may be |
 
