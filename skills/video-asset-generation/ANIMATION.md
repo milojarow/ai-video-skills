@@ -236,6 +236,38 @@ The actual MP4s are at `~/video-lab/<topic>/<video-name>/<variant>/videos/` for 
 
 ---
 
+## A generative model CANNOT land a move on the exact second of a word
+
+This question comes back every time a shot looks "really animated" — why not just use a text-to-video / image-to-video tool for the whole thing? The answer is not about quality. **It's about interface.**
+
+**There is nowhere to put the time.** The input to a generative video model is: a prompt, optionally a first frame, a duration and an aspect ratio. It does not accept:
+
+- an audio track to align against,
+- a per-object identity ("this one is object 3"),
+- a list of instants ("object 3 comes forward at 2.80s").
+
+Ask for "each object comes forward in turn" and you get plausible motion at arbitrary instants. **And the instant IS the shot**: if an object arrives half a second early, the viewer sees one object approaching while the voice names a different one, and the shot stops meaning what it meant. Render quality is irrelevant once sync is lost.
+
+### The split that works
+
+| Piece | Who does it | Why |
+|---|---|---|
+| The objects (loose assets, clean alpha) | generative model | it's material, and the model is unbeatable at material |
+| The motion and its instant | hand-authored timeline (GSAP + word-level alignment) | it's time, and time gets declared |
+
+It's also cheaper: a good still costs cents and iterates fast; a generated clip costs an order of magnitude more and can't be corrected without regenerating the whole thing.
+
+There's a benefit that only shows up later: **the cues stay editable.** When a voice swap forced a resync, repatching six numbers fixed the entire shot. A baked generated clip has no such repair — you throw it away and pay again (see `video-composition/MULTI-BEAT.md`).
+
+### The rule
+
+> If the value of the shot is in **WHEN** something happens relative to the audio, the generative model is the wrong tool for the motion — and the right tool for the material.
+
+**Generator is right for:** textures, living backgrounds, an object floating, a camera push — any motion whose exact instant doesn't matter.
+**Generator is wrong for:** hits on a beat, entrances on a word, counts, lyric sync.
+
+---
+
 ## When to animate vs keep static
 
 | Situation | Recommendation |
