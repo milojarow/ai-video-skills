@@ -26,6 +26,7 @@ This is the last layer before render. Captions live in `video-captions` (called 
 | Website-to-video pipeline: capture → beats fan-out → assembly (transcribe, fonts, sub-agent contract) | [WEBSITE-PIPELINE.md](WEBSITE-PIPELINE.md) |
 | Seamless infinite loops for web heroes: ping-pong with ffmpeg, dual 1080p/720p cuts chosen client-side, reduced-motion and autoplay-refusal handling | [WEB-LOOP.md](WEB-LOOP.md) |
 | Deriving a value by measuring the DOM: why a clip that is not active yet returns plausible garbage, baking the measured number, and centring on the object's axis instead of the canvas's | [MEASURING.md](MEASURING.md) |
+| Screen mockups (chat, feed, terminal) as an insert: copying the UI's fill direction, bottom-anchored stacks, animating the push without reflow | [UI-MOCKUPS.md](UI-MOCKUPS.md) |
 
 ---
 
@@ -110,6 +111,7 @@ Copy the closer one as starting point and adapt:
 | Black flash mid-video | Cross-fade overlap timing wrong (a segment ends before the next fully fades in) | Make adjacent segments overlap by `CROSSFADE` (0.2s typical) |
 | Watermark text reads tiny on phone | Font size too small for 1080×1920 | Bump to ≥22px; logo height ≥60px |
 | A computed size/spacing lands wildly off (and every gate passes) | Measured the element at load while its clip was still inactive — layout APIs answer anyway | Bake the value from a `snapshot`, or measure on a probe outside the composition. See [MEASURING.md](MEASURING.md) |
+| A full-screen UI mockup renders clean but reads as "the app didn't load" | The imitated UI fills from the other end (a chat grows up from the bottom) so half the frame is flat empty colour | Anchor the stack to the bottom, add the input bar, dim clipped history at the top. See [UI-MOCKUPS.md](UI-MOCKUPS.md) |
 | Final render is much larger MB than draft | `--quality high` produces larger files (this is correct — keep it for delivery) | Acceptable for archival/delivery; not a bug |
 
 ---
