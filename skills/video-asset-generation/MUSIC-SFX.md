@@ -99,6 +99,53 @@ Be concrete. The model is precise about literal description.
 - **2-4 SFX per short, max.** A 22-second piece doesn't have room for more than a handful of accents.
 - **Always normalize/check volume.** If an SFX renders louder than peers, lower its `data-volume` in the composition (typical: 0.5–0.7).
 
+### Sound Generation is bass-heavy — a phone cannot hear what it returns
+
+Measured across six generations asking for a brand sting. The bias is systematic, not bad luck:
+
+| Prompt | Energy below 300 Hz |
+|---|---|
+| `"bronze bell hit"` | 88.2% |
+| `"two-note sonic logo"` | 97.5% |
+| `"electronic brand ident"` | 67.6% — and peaked at 1.38, i.e. delivered clipped |
+
+A phone speaker starts responding around **300 Hz**. A sting with 97% of its energy below that
+**does not exist** on the device where the video is mostly watched. It sounds perfect on
+headphones and like nothing on the handset — the failure mode you cannot detect listening at
+the desk.
+
+**The arbiter — run it before accepting any generated SFX:**
+
+```python
+X  = np.abs(np.fft.rfft(x * np.hanning(len(x))))
+fr = np.fft.rfftfreq(len(x), 1/SR); T = X.sum()
+low  = X[fr < 300].sum() / T
+mid  = X[(fr >= 300) & (fr < 4000)].sum() / T
+high = X[fr >= 4000].sum() / T
+```
+
+Practical floor: **>25% in 300–4000 Hz**, or the sound does not survive a phone speaker. Check
+the peak in the same pass — `abs(x).max() > 1.0` means the model already handed you a clipped
+file, and normalizing afterwards cannot recover what was cut off.
+
+**Ask for brightness explicitly, by name.** The same six attempts, now requesting treble:
+
+| Prompt | Result |
+|---|---|
+| `"small bright bronze bowl, crisp attack, upper midrange overtones, glassy, thin and bright not boomy, minimal bass"` | 2.2% low / 94.6% mid |
+| `"tuned metal bell, glockenspiel, sharp transient, no low end, no rumble, no bass"` | 2.6% low / 35.3% mid / 62.2% high |
+
+Words that moved it: *bright, crisp, upper midrange, glassy, thin not boomy, minimal bass, no
+rumble, no low end, legible on small speakers*.
+
+### Generate TEXTURE, synthesize MELODY
+
+When the sound needs **specific pitches** — a note sequence, a chord, a recognizable motif —
+Sound Generation is the wrong tool. It does not accept "four rising notes forming a major
+chord"; it returns a texture. Forty lines of numpy give exact control over frequency, duration,
+glissando and the millisecond of every note, come out deterministic (fixed seed for the noise),
+and can be checked by an arbiter. **Generate for texture; synthesize for melody.**
+
 ---
 
 ## Audio mix in the composition
