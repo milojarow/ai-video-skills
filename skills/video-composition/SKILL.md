@@ -25,6 +25,7 @@ This is the last layer before render. Captions live in `video-captions` (called 
 | Verifying a render before delivery (freezedetect, contact sheet, `hyperframes snapshot`) | [VERIFICATION.md](VERIFICATION.md) |
 | Website-to-video pipeline: capture → beats fan-out → assembly (transcribe, fonts, sub-agent contract) | [WEBSITE-PIPELINE.md](WEBSITE-PIPELINE.md) |
 | Seamless infinite loops for web heroes: ping-pong with ffmpeg, dual 1080p/720p cuts chosen client-side, reduced-motion and autoplay-refusal handling | [WEB-LOOP.md](WEB-LOOP.md) |
+| Deriving a value by measuring the DOM: why a clip that is not active yet returns plausible garbage, baking the measured number, and centring on the object's axis instead of the canvas's | [MEASURING.md](MEASURING.md) |
 
 ---
 
@@ -108,6 +109,7 @@ Copy the closer one as starting point and adapt:
 | Audio out of sync after a script change | Forgot to re-run Scribe after regenerating the voiceover | Re-transcribe → update timestamps in build script |
 | Black flash mid-video | Cross-fade overlap timing wrong (a segment ends before the next fully fades in) | Make adjacent segments overlap by `CROSSFADE` (0.2s typical) |
 | Watermark text reads tiny on phone | Font size too small for 1080×1920 | Bump to ≥22px; logo height ≥60px |
+| A computed size/spacing lands wildly off (and every gate passes) | Measured the element at load while its clip was still inactive — layout APIs answer anyway | Bake the value from a `snapshot`, or measure on a probe outside the composition. See [MEASURING.md](MEASURING.md) |
 | Final render is much larger MB than draft | `--quality high` produces larger files (this is correct — keep it for delivery) | Acceptable for archival/delivery; not a bug |
 
 ---
