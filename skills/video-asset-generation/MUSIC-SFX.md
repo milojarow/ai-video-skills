@@ -148,6 +148,64 @@ and can be checked by an arbiter. **Generate for texture; synthesize for melody.
 
 ---
 
+## Synthesizing a sonic logo
+
+### A brand sting that ENDS LOW reads as failure — and it is measurable
+
+A four-note logo sting came out with good timbre, good level and a clean tail, and was
+rejected on first listen as sounding like a *defeat* cue — the sound a game makes when the
+player loses something. The timbre was not the problem. The pitches were:
+
+    566 → 916 → 716 → 1150 → 322 Hz
+                                ↑ the last one, nearly an octave BELOW all the others
+
+**Landing on the lowest note is the sonic signature of loss** — it is what error chimes and
+"womp womp" stings do. Achievement jingles do the opposite without exception: they ascend and
+land at the top. Fixed with an ascending arpeggio resolving into a major chord:
+
+    383 → 516 → 650 → 795 Hz   (a triad resolving on the major chord)
+
+### The arbiter — automate it, don't listen for it
+
+Segment by RMS envelope, take the dominant pitch of each segment, and require the last to be
+the maximum. It is a binary gate; the script exits non-zero when it fails.
+
+```python
+m    = (fr > 250) & (fr < 2600)      # melodic range, above the sub
+note = int(fr[m][np.argmax(X[m])])   # per segment, split at the attacks
+assert notes[-1] == max(notes), "ends low = failure signature"
+```
+
+### Two traps this arbiter caught that the ear could not have explained
+
+1. **A reinforcement layer an octave down eats the resolution.** Doubling the tonic below the
+   final chord for body made the detector measure the piece landing at 533 Hz — the same pitch
+   as the first note, i.e. no ascent at all. Put the low-end weight in a **sub outside the
+   melodic range (55–65 Hz)**, where it cannot compete for being "the note".
+2. **A single note sounds like a beep, not like a brand.** Resolving on a chord — three tones
+   together — is what makes it read as a logo. Cheap: three more oscillators.
+
+### Placing it in a mix
+
+Two rules that apply the moment the sting sits over an existing bed:
+
+- **Broadband RMS lies against a tonal element over a noise bed.** It averages energy
+  concentrated in a few narrow bands against energy spread across the whole spectrum. In a real
+  case the notes measured only ~3 dB over the ambience broadband — reads as "buried" — while a
+  band split showed **+16 dB in 250–700 Hz**, where their fundamentals live. Measure the band
+  of the fundamentals before adding gain to a tonal element.
+- **Measure the WINDOW the element falls in, not the track.** A bed described as "living in the
+  upper mids" — true for the full track — measured **94.7% below 300 Hz** in the exact 2.4 s
+  window of the hit: a low-pulse section, no melody, zero overlap. A three-minute average does
+  not describe two seconds.
+- **A number that does not move proves nothing; only a marker that RISES is proof.** Adding the
+  sting to a mix left its peak and mean unchanged to the decibel, because the programme peak
+  lived in the spoken section far from the sting — which reads exactly like "the sting never
+  landed". Confirm in the positive, by band: 300 Hz–3 kHz went from 5.3% to 17.6% in that
+  window.
+
+---
+
 ## Audio mix in the composition
 
 The voiceover, music, and SFX go into separate audio tracks in the HyperFrames composition. See `video-composition/COMPOSITION.md` for the full multi-track audio layout. Quick recap:
