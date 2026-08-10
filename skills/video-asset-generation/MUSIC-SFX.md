@@ -204,6 +204,41 @@ Two rules that apply the moment the sting sits over an existing bed:
   landed". Confirm in the positive, by band: 300 Hz–3 kHz went from 5.3% to 17.6% in that
   window.
 
+### Measure the file you WROTE, never the buffer you encoded
+
+A synthesized signal normalized to **0.71 linear = −2.97 dBFS** and written with
+
+```bash
+ffmpeg -f f32le -ar 48000 -ac 1 -i -   -ar 48000 -ac 2 -y out.wav
+```
+
+was documented as "peaks at −3 dBTP". The delivered file peaks at **−5.99 dBFS**. Somebody
+else caught it by measuring the file.
+
+**Cause:** ffmpeg's mono→stereo upmix preserves **power**, not amplitude, and spreads −3 dB per
+channel. Correct by design and completely silent — no warning, valid file, and the difference
+only appears if you measure the result.
+
+    mono signal before writing    −2.97 dBFS
+    the written stereo WAV        −5.99 dBFS
+    that same WAV folded to mono  −2.97 dBFS   ← the energy is there, split
+
+−6 dBFS is fine headroom for a sting; the file was not wrong. **The claim** was. Whoever mixes
+the asset derives their gain from the number you gave them, so a 3 dB error starts their
+calculation crooked — and "fixing" the level after someone already mixed against the real file
+changes the sound of their piece without anything failing.
+
+```python
+raw = subprocess.run(["ffmpeg","-v","error","-i",f,"-f","f32le","-ar","48000","-"],
+                     capture_output=True).stdout
+peak_db = 20*np.log10(abs(np.frombuffer(raw, dtype=np.float32)).max())
+```
+
+Between the buffer and the file there is a resample, a channel change, a quantization and
+sometimes a dither — any of them moves the peak. And when the wrong number already went out to
+third parties: **correct the documentation, not the file**, if anyone has already derived a mix
+from it.
+
 ---
 
 ## Audio mix in the composition
