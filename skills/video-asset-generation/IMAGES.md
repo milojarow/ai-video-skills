@@ -190,8 +190,49 @@ After downloading images, do a visual scan. Regenerate any that:
 - Default into stereotype tropes despite the anti-pattern prefix
 - Have visible **artifacts** (extra fingers, distorted faces, weird text)
 - **Show a different number of units than the prompt or the product copy declares** — count them, zooming into the edge of any stack
+- **Don't read at the size they will actually be used at** — see the section below
 
 Regeneration cost: ~$0.02 per image. Cheap insurance against shipping bad output.
+
+---
+
+## Judge an asset at its USE size, not at full resolution
+
+A generated product photo looked perfect at 1024×1024: kitchen scene, white plate, neutral
+light, two countable pieces. Approved, uploaded, shipped. It then went into a **48 px
+button**, where the wooden table in the background eats half the frame and the product is a
+brown smudge. The photo was not bad — it was bad **for that use**, and the original review
+never asked what size it would live at.
+
+### The referee, and it is two commands
+
+Downscale each candidate to the real use size and blow it back up **without interpolating**.
+Whatever is lost there is exactly what the user will not see:
+
+```bash
+magick candidate.png -resize 48x48 -filter point -resize 288x288 thumb-candidate.png
+magick montage -label '%f' thumb-*.png -tile 3x1 -geometry +8+8 \
+  -background '#1b1b1b' -fill white -pointsize 16 comparison.png
+```
+
+`-filter point` is what makes the test honest: nearest-neighbour upscaling invents no detail
+that does not exist at 48 px. With a normal resize the image "repairs itself" and the
+comparison lies.
+
+On a real run, three candidates side by side at the same size settled it with no argument:
+the scene with the table was a smudge, the three-quarter angle fused the two pieces into one
+lump, and the top-down shot kept two separate, countable discs. That decided which one shipped.
+
+### The rules
+
+- **Ask for the destination size BEFORE writing the prompt.** A 48 px asset wants a top-down
+  angle, the subject filling the frame and a flat background; a full-screen asset can afford a
+  scene and depth of field. They are not the same prompt.
+- **One asset may need two versions** if it lives at two very different sizes. ~$0.02 each.
+- **Add it to the REGEN criteria**, next to "count does not match the copy": *does not read at
+  its use size*.
+- It is the visual case of a general principle: **verify the instrument before the thing
+  measured.** Reviewing a thumbnail at full resolution is measuring with the wrong ruler.
 
 ---
 
