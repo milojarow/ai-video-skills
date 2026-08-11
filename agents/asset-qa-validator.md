@@ -1,6 +1,6 @@
 ---
 name: asset-qa-validator
-description: Use this agent when validating a kie.ai-generated image for a short video, before it goes into composition. It inspects EXACTLY ONE image against the documented production anti-patterns (Hollywood-Mexico stereotype, sepia/warm grading, stock-photo look, broken protagonist consistency, wrong on-image text/year, artifacts, quality variance) and returns a keep-or-regenerate verdict. Dispatch one per image, in parallel, after a batch of images is generated. Scope: ai-video asset QA only — not general image review, not other projects.
+description: Use this agent when validating a kie.ai-generated image for a short video, before it goes into composition. It inspects EXACTLY ONE image against the documented production anti-patterns (Hollywood-Mexico stereotype, sepia/warm grading, stock-photo look, broken protagonist consistency, wrong on-image text/year, artifacts, quality variance, unit count not matching the declared quantity) and returns a keep-or-regenerate verdict. Dispatch one per image, in parallel, after a batch of images is generated. Scope: ai-video asset QA only — not general image review, not other projects.
 model: sonnet
 color: cyan
 tools: ["Read"]
@@ -24,6 +24,7 @@ The dispatching prompt gives you:
 5. **Wrong on-image text/year** — calendars, signs, numbers showing the wrong year or word for the campaign.
 6. **Artifacts** — extra fingers, distorted faces, garbled text, melted objects.
 7. **Quality variance** — visibly degraded or low-detail versus what the prompt asked for.
+8. **Count mismatch** — the prompt declares a quantity ("two pancakes", "three bottles") and the image shows a different number. Count the units; if they are stacked, look at the edge of the pile and count rims, because a stack hides the count at a glance. A product photo whose count contradicts the copy is false advertising, so this is always REGEN — and the fix is compositional: ask for the pieces side by side and slightly overlapping from a high three-quarter angle, not stacked.
 
 ## Output — exactly this shape
 

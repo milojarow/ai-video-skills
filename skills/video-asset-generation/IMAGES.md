@@ -120,6 +120,8 @@ Default lighting in cinematic realism prompts. Sounds nice, but the model interp
 
 **Fix:** "Natural neutral lighting" / "soft directional daylight" / "documentary editorial style" — specifically push the model toward editorial-photography mood, where light is just light, not a coloring agent.
 
+**Sweet food pulls hardest.** Anything with honey, syrup, caramel or batter drags the whole frame to orange even when the prefix never asks for warmth — the subject's own colour is read as a grading cue. On desserts state all three clauses explicitly: `no warm golden grading, no sepia tone, no orange filter`. With them the frame comes back neutral on the first try; without them an amber filter over the entire image is the default.
+
 ### ❌ Stock-photo settings
 
 Without explicit "documentary editorial" or "contemporary universal", outputs default to overly clean stock-photo aesthetics. Real lives have texture — kitchens with magnets on the fridge, offices with personal items on desks, bedrooms with rumpled blankets.
@@ -134,6 +136,50 @@ When 3-5 images share a protagonist, the model treats each prompt independently 
 
 ---
 
+## If the copy states a NUMBER, the composition has to let you count it
+
+A product shot for an item sold as "2 pancakes with butter and honey" was prompted with
+the count stated **twice**, once positively and once as a negation:
+
+```
+...exactly two round golden-brown pancakes stacked one on top of the other on a plain
+white ceramic plate... exactly two pancakes only, no third pancake...
+```
+
+It returned **three**. And not visibly so: at thumbnail size the pile reads fine, and you
+have to zoom into the edge of the stack and count golden rims to catch it. A photo showing
+three where the price tag charges for two is false advertising, not a styling detail.
+
+**Stacking hides the count.** In a pile each unit contributes only a few pixels of visible
+rim, so nothing in the image strongly separates "two layers" from "three" — not for the
+model, and not for the viewer either. Repeating the number in the prompt does not fix it:
+the failure is in the **composition**, not in the instruction.
+
+**What worked first try** — pieces side by side, slightly overlapping, from a high
+three-quarter angle so each unit shows its whole face:
+
+```
+a pair of two round golden-brown pancakes lying flat side by side and slightly overlapping
+on a plain white ceramic plate, seen from a high three-quarter angle so both pancake faces
+are fully visible and countable, ... only two pancakes in the entire image
+```
+
+Every unit is a separate, complete disc — countable at a glance. A second variant (a stack
+shot at plate level so the silhouette shows exactly two layers) also came back with two, but
+it needs a second look to confirm; it lost on legibility.
+
+### The rule
+
+- **If the product copy carries a number, never ask for a stack.** Ask for the pieces
+  separated or slightly overlapping. Applies to anything stackable — pancakes, tacos,
+  wings, donuts, slices.
+- **Count the units in the delivered image before it ships**, zooming into the edge if
+  anything is piled. A count that does not match the copy is a REGEN criterion.
+- Regenerating costs ~$0.02. Publishing a photo that promises more than the product
+  delivers costs the client's trust.
+
+---
+
 ## Curation: when to regenerate
 
 After downloading images, do a visual scan. Regenerate any that:
@@ -143,6 +189,7 @@ After downloading images, do a visual scan. Regenerate any that:
 - Show a **different protagonist** than the consistency clause specifies
 - Default into stereotype tropes despite the anti-pattern prefix
 - Have visible **artifacts** (extra fingers, distorted faces, weird text)
+- **Show a different number of units than the prompt or the product copy declares** — count them, zooming into the edge of any stack
 
 Regeneration cost: ~$0.02 per image. Cheap insurance against shipping bad output.
 
@@ -243,3 +290,21 @@ URL=$(jq -r '.data.resultJson | fromjson | .resultUrls[0]' response.json)
 # Download
 curl -sS -L "$URL" -o image.png
 ```
+
+### Poll to a FILE — don't pipe the response through `echo`
+
+The response carries the original request in `param` as **nested, escaped JSON** (`\\\"`).
+A polling loop written as
+
+```bash
+R=$(curl -sS ".../recordInfo?taskId=$TID" -H "Authorization: Bearer $KIE_API_KEY")
+echo "$R" | jq -r '.data.state'          # ← breaks
+```
+
+loses backslashes in `echo` (zsh's builtin interprets them), so `jq` fails with
+`Invalid numeric literal ...` on **every** iteration. The loop then looks exactly like
+"the API never finishes" — while `state` was already `success` on the first pass.
+
+Write the body to a file (`curl -o response.json` and `jq ... response.json`) as the Quick
+reference above does, or use `printf '%s' "$R" | jq`. The file is not incidental style;
+it is what keeps the polling loop from lying to you. Don't "simplify" it into a pipe.
