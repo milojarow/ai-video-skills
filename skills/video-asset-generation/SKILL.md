@@ -1,6 +1,6 @@
 ---
 name: video-asset-generation
-description: Generate the building blocks of a short video — images, voiceovers, music, SFX, and image-to-video animation — using kie.ai (Nano Banana 2 + Wan 2.6), OpenRouter video models (Veo 3.1, Hailuo, Sora, Grok Imagine), ElevenLabs (TTS + Music + Sound Generation), and Luna CDN for hosting. Use this skill whenever the user asks to generate any video asset programmatically — "generate image", "make a voiceover", "TTS", "create music", "add SFX", "animate this image", "Wan 2.6", "kie.ai", "OpenRouter video", "Veo 3.1", "minimax-h3", "i2v", "ElevenLabs", "Antonio voice", "Camila voice", "Marto voice", "image-to-video", "papercut style", "cinematic realism style", "Luna CDN", "subir asset", "upload to CDN", or any combination. Also triggers on questions about which video model is cheapest, video-model pricing, voice selection, prompt patterns for these tools, character consistency between generated images, or how to avoid known anti-patterns (Mexican stereotypes in prompts, sepia tones, lip movement on silent videos, webp input frames rejected by i2v models). The six reference files cover each provider in depth — read the one that matches the task.
+description: Generate the building blocks of a short video — images, voiceovers, music, SFX, and image-to-video animation — using kie.ai (Nano Banana 2 + Wan 2.6), OpenRouter video models (Veo 3.1, Hailuo, Sora, Grok Imagine), ElevenLabs (TTS + Music + Sound Generation), and Luna CDN for hosting. Use this skill whenever the user asks to generate any video asset programmatically — "generate image", "make a voiceover", "TTS", "create music", "add SFX", "animate this image", "Wan 2.6", "kie.ai", "OpenRouter video", "Veo 3.1", "minimax-h3", "i2v", "ElevenLabs", "Antonio voice", "Camila voice", "Marto voice", "image-to-video", "papercut style", "cinematic realism style", "Luna CDN", "subir asset", "upload to CDN", or any combination. Also covers image-to-image EDITING of a real photograph — "edit this photo", "editar una foto", "retouch", "cambiar sólo el espejo", "image-to-image", "nano-banana-pro", "gpt-image-2", "grok-imagine" — including which model leaves the rest of the photo intact and the composite-the-region-back rule. Also triggers on questions about which video model is cheapest, video-model pricing, voice selection, prompt patterns for these tools, character consistency between generated images, or how to avoid known anti-patterns (Mexican stereotypes in prompts, sepia tones, lip movement on silent videos, webp input frames rejected by i2v models). The six reference files cover each provider in depth — read the one that matches the task.
 ---
 
 # Video Asset Generation
@@ -18,6 +18,7 @@ This skill is the **assets layer**. Composition (assembling the assets into a fi
 | Provider | What it does | Reference file |
 |---|---|---|
 | **kie.ai Nano Banana 2** | Text-to-image. Two validated styles: papercut, cinematic realism. | [IMAGES.md](IMAGES.md) |
+| **kie.ai image-to-image** | Editing a REAL photo surgically (nano-banana-pro / gpt-image-2 / grok-imagine). Which one respects the photo, and the compositing rule. | [IMAGE-EDITING.md](IMAGE-EDITING.md) |
 | **ElevenLabs TTS** | Text-to-speech. Mexican-Spanish voices validated: Antonio, Camila, Marto, Jose. | [VOICES.md](VOICES.md) |
 | **ElevenLabs Music** | Instrumental background music with controllable mood. | [MUSIC-SFX.md](MUSIC-SFX.md) |
 | **ElevenLabs Sound Generation** | Single-purpose SFX (heartbeat, page-turn, chime). | [MUSIC-SFX.md](MUSIC-SFX.md) |
@@ -32,6 +33,7 @@ This skill is the **assets layer**. Composition (assembling the assets into a fi
 | Need | Provider | Notes |
 |---|---|---|
 | Static image (background, scene, CTA card) | kie.ai Nano Banana 2 | `aspect_ratio: 9:16`, `resolution: 1K`, output PNG |
+| Change ONE region of an existing real photo | kie.ai `nano-banana-pro` (image-to-image) | Least collateral damage of the three tested (0.001% outside the region). **Never ship the raw output — composite only the edited region back over the original.** See IMAGE-EDITING.md |
 | Animated scene (motion in a static image) | **Price both, then pick** | Requires a public PNG/JPEG URL either way. kie.ai Wan 2.6: `duration: '5'` enum, `resolution: '1080p'`. OpenRouter: free-form `duration`, typically 3-5× cheaper — query `GET /api/v1/videos/models` for today's prices |
 | Subtle motion only (camera push, breath, light shift) | OpenRouter cheap tier | Don't pay for acting and physics the segment never shows |
 | Spoken narration | ElevenLabs TTS | `eleven_multilingual_v2`, `language_code: es` for Mexican Spanish |

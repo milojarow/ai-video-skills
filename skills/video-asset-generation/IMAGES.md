@@ -2,6 +2,10 @@
 
 Static image generation for video segments. The standard model used in this project.
 
+> **Editing an existing photo instead of generating one?** See
+> [IMAGE-EDITING.md](IMAGE-EDITING.md) — image-to-image uses a different input
+> field per model family, and the raw output is never used as-is.
+
 ---
 
 ## API basics
