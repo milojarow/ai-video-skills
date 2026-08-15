@@ -27,6 +27,7 @@ This is the last layer before render. Captions live in `video-captions` (called 
 | Seamless infinite loops for web heroes: ping-pong with ffmpeg, dual 1080p/720p cuts chosen client-side, reduced-motion and autoplay-refusal handling | [WEB-LOOP.md](WEB-LOOP.md) |
 | Deriving a value by measuring the DOM: why a clip that is not active yet returns plausible garbage, baking the measured number, and centring on the object's axis instead of the canvas's | [MEASURING.md](MEASURING.md) |
 | Screen mockups (chat, feed, terminal) as an insert: copying the UI's fill direction, bottom-anchored stacks, animating the push without reflow | [UI-MOCKUPS.md](UI-MOCKUPS.md) |
+| Hand-written ffmpeg calls: keeping a long filter graph in a file (`-/filter_complex`, which replaced `-filter_complex_script` in ffmpeg 9) and the quoting error that lies about its cause | [FFMPEG-CLI.md](FFMPEG-CLI.md) |
 
 ---
 
