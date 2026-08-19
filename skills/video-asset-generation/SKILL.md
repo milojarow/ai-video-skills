@@ -24,6 +24,7 @@ This skill is the **assets layer**. Composition (assembling the assets into a fi
 | **ElevenLabs Sound Generation** | Single-purpose SFX (heartbeat, page-turn, chime). | [MUSIC-SFX.md](MUSIC-SFX.md) |
 | **kie.ai Wan 2.6** | Image-to-video animation. 5/10/15s, 720p/1080p. | [ANIMATION.md](ANIMATION.md) |
 | **OpenRouter video** | Image-to-video across ~17 models (Veo 3.1, Hailuo, Wan, Sora, Grok). Usually 3-5× cheaper; arbitrary durations; real price catalog. | [OPENROUTER-VIDEO.md](OPENROUTER-VIDEO.md) |
+| **Local (PIL + numpy)** | Rotating a flat art piece to a exact angle or inside a bounded arc — $0, source art pixel-identical, exact loop. | [DETERMINISTIC-ROTATION.md](DETERMINISTIC-ROTATION.md) |
 | **Luna CDN** | File hosting with stable public URLs. | [LUNA-CDN.md](LUNA-CDN.md) |
 
 ---
@@ -36,6 +37,7 @@ This skill is the **assets layer**. Composition (assembling the assets into a fi
 | Change ONE region of an existing real photo | kie.ai `nano-banana-pro` (image-to-image) | Least collateral damage of the three tested (0.001% outside the region). **Never ship the raw output — composite only the edited region back over the original.** See IMAGE-EDITING.md |
 | Animated scene (motion in a static image) | **Price both, then pick** | Requires a public PNG/JPEG URL either way. kie.ai Wan 2.6: `duration: '5'` enum, `resolution: '1080p'`. OpenRouter: free-form `duration`, typically 3-5× cheaper — query `GET /api/v1/videos/models` for today's prices |
 | Subtle motion only (camera push, breath, light shift) | OpenRouter cheap tier | Don't pay for acting and physics the segment never shows |
+| A piece that must turn to a specific angle, or stay inside an arc (needle, hand, dial) | **Local PIL + numpy**, not i2v | Generative i2v spins it a full turn no matter how the limit is worded. Deterministic rotation costs $0 and keeps the art pixel-identical — see [DETERMINISTIC-ROTATION.md](DETERMINISTIC-ROTATION.md) |
 | Spoken narration | ElevenLabs TTS | `eleven_multilingual_v2`, `language_code: es` for Mexican Spanish |
 | Background music | ElevenLabs Music | Always `force_instrumental: true` so it doesn't fight the voice |
 | One-shot SFX (heartbeat, click, chime) | ElevenLabs Sound Generation | Single sound, brief (0.5-2s) |
@@ -137,7 +139,7 @@ Both have working `build-composition.mjs` scripts that generate `index.html` fro
 
 ## When in doubt
 
-- Check the specific reference file ([IMAGES.md](IMAGES.md), [VOICES.md](VOICES.md), [ANIMATION.md](ANIMATION.md), [OPENROUTER-VIDEO.md](OPENROUTER-VIDEO.md), [MUSIC-SFX.md](MUSIC-SFX.md), [LUNA-CDN.md](LUNA-CDN.md))
+- Check the specific reference file ([IMAGES.md](IMAGES.md), [VOICES.md](VOICES.md), [ANIMATION.md](ANIMATION.md), [DETERMINISTIC-ROTATION.md](DETERMINISTIC-ROTATION.md), [OPENROUTER-VIDEO.md](OPENROUTER-VIDEO.md), [MUSIC-SFX.md](MUSIC-SFX.md), [LUNA-CDN.md](LUNA-CDN.md))
 - For composition assembly, pivot to `video-composition` skill
 - For caption styling, pivot to `video-captions` skill
 - For workspace setup or Node 22 + sharp issues, pivot to `video-edit-setup` skill

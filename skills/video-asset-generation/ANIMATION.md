@@ -202,7 +202,8 @@ the piece. Cost of that lesson: 4 renders × $0.53 = $2.12.
 > motion — exactly as when what matters is the INSTANT. It is material, not time and
 > not geometry.
 
-Rotate the piece deterministically instead, from the flat source art.
+Rotate the piece deterministically from the flat source art instead — see
+[DETERMINISTIC-ROTATION.md](DETERMINISTIC-ROTATION.md).
 
 #### Measuring angular travel (a 9-frame contact sheet lies)
 
