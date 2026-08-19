@@ -179,6 +179,51 @@ one that spun the objects; with rotation forbidden it won both columns. Write th
 the *first* attempt — i2v retries are billed, and a run can die mid-iteration on
 `{"code":500,"msg":"Credits insufficient"}`.
 
+### The prohibition does NOT extend to "it turns, but only within an arc"
+
+Forbidding rotation by name works for a piece that must not turn **at all**. It does
+not transfer to the other case — a needle, a hand, a dial that *does* rotate, but must
+stay inside a bounded arc. Measured twice on `wan/2-6-image-to-video`, 1080p, 5 s,
+animating a gauge needle:
+
+| Attempt | Prompt | Needle's angular travel |
+|---|---|---|
+| v1 | describes the desired motion (tachometer sweep with bounce), forbids rotation on the tile and the ring | **356.7°** out of 360 |
+| v2 | + an explicit, named angular limit: "NEVER completes a circle, NEVER spins, NEVER passes 12 o'clock, NEVER passes 6 o'clock, its whole travel stays between 7 and 1 o'clock" | **352.1°**, and the needle **fragments** and detaches from its pivot |
+
+The model treats any articulated piece as a clock hand. The explicit prohibition does
+not shorten the travel — on the second run it additionally degraded the integrity of
+the piece. Cost of that lesson: 4 renders × $0.53 = $2.12.
+
+**The rule, sibling of "a generative model cannot land a move on the exact second":**
+
+> If the value of the shot is an object reaching a **specific angle**, or staying
+> inside a **bounded arc**, the generative i2v model is the wrong tool for that
+> motion — exactly as when what matters is the INSTANT. It is material, not time and
+> not geometry.
+
+Rotate the piece deterministically instead, from the flat source art.
+
+#### Measuring angular travel (a 9-frame contact sheet lies)
+
+Per-frame angle series plus `np.unwrap`, so the ±180° wrap does not fake the range:
+
+```python
+# per frame: color-mask the piece, tip = pixel farthest from the pivot
+tip = max(pts, key=lambda p: (p[0]-cx)**2 + (p[1]-cy)**2)
+ang = math.degrees(math.atan2(cy-tip[1], tip[0]-cx))
+...
+u = np.degrees(np.unwrap(np.radians(np.array(angs))))
+travel = np.nanmax(u) - np.nanmin(u)      # >=330 => it went all the way around
+loop   = abs(u[0] - u[-1])                # how cleanly the loop closes
+```
+
+**Mandatory positive control before believing the meter:** build a static video from
+the source image (`ffmpeg -loop 1 -i still.jpg -t 2`) and run it through the same
+meter. It must report `travel = 0.0°`. Without that control a "bounded arc" is not
+evidence — the mask may simply not be finding the piece, and an empty range reads as a
+small one.
+
 ### Measuring rotation without eyeballing it
 
 A 4-frame contact sheet only hints; this proves it. Crop the object's region, count the width of
