@@ -10,7 +10,7 @@
       "name": "ai-video-skills",
       "source": "./",
       "description": "Four sub-skills covering: (1) project setup on rolling-release Linux with HyperFrames + sharp; (2) word-by-word closed captions (TikTok-pop and karaoke styles, Whisper vs Scribe); (3) asset generation via kie.ai images + ElevenLabs voice/music/SFX + Wan 2.6 image-to-video animation + Luna CDN hosting; (4) composition workflow with HyperFrames (img+video+audio multi-track, watermark rotation, fade-to-black, URL typewriter, platform safe-zones for WhatsApp Stories / IG Reels / FB).",
-      "version": "0.5.22",
+      "version": "0.5.23",
       "author": {
         "name": "milojarow",
         "url": "https://github.com/milojarow"

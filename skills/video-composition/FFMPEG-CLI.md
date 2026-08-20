@@ -38,8 +38,32 @@ The file also accepts newlines between stages — one `...[l];` stage per line �
 [a][b]hstack=inputs=2[v]
 ```
 
+## Measuring ONE channel of a stereo file
+
+Whenever two audio sources are merged into one stereo file — `amerge=inputs=2` puts input 0 on channel 0 (left) and input 1 on channel 1 (right) — **swapping them produces no visible symptom**. The file looks identical, everything downstream still plays, and only the identity attached to each channel is wrong. The single test that catches it is signal in one channel, silence in the other, then measure each channel separately. Three traps sit in that measurement, all of them blaming the code under test instead of the meter:
+
+**1. `channelsplit` requires EVERY output to be connected.** Leaving one dangling aborts the run:
+
+```
+-filter_complex "[0:a]channelsplit=channel_layout=stereo[l][r];[l]astats=metadata=1[out]" -map "[out]"
+# Filter 'channelsplit' has output 0 (r) unconnected
+# Error binding filtergraph inputs/outputs: Invalid argument
+```
+
+To pull a single channel use `pan`, which is explicit and leaves nothing unconnected:
+
+```bash
+-af "pan=mono|c0=c0,astats=metadata=1"   # left
+-af "pan=mono|c0=c1,astats=metadata=1"   # right
+```
+
+**2. `astats` writes to STDERR.** Capturing stdout returns empty every time, and the parse failure then reads as a bug in the thing being measured.
+
+**3. Thresholds have to match reality.** A `sine=frequency=440` tone measures **−21 dB RMS**, not "louder than −20" — an assert of `> -20` fails on a perfectly correct measurement. `anullsrc` silence measures `-inf`. Margins that hold: signal `> -40`, silence `< -80`.
+
 ## Walls
 
 - **`-filter_complex_script` no longer exists (ffmpeg 9+)** — `-/filter_complex <file>`.
 - **A quoting break in `drawtext` reports "no text provided"** — the error names the wrong cause; suspect the shell first.
 - **Inline graphs beyond two stages are a false economy** — the file version is versionable, diffable and line-wrapped.
+- **`amerge` channel order is silent when wrong** — assert it with a per-channel `pan` + `astats` measurement, not by listening.
