@@ -149,6 +149,56 @@ curl -sS "https://api.elevenlabs.io/v1/text-to-speech/$VOICE?output_format=mp3_4
 
 ---
 
+## Say-it vs write-it — address numbers and acronyms
+
+Two es-MX narration defects that render with **zero errors** and only surface by listening. Both are fixed by separating **what is SAID** from **what is WRITTEN** — the on-screen caption keeps the normal spelling, the voice field gets the spoken form.
+
+### 1. Street numbers are read in pairs, not as a quantity
+
+The model expands `Av. Central 1947` as an amount — *«mil novecientos cuarenta y siete»*. In Mexican Spanish an address is said in pairs: *«diecinueve cuarenta y siete»*. Read whole it sounds like a price, because an address is a **label**, not a quantity.
+
+| written | wrong (quantity) | right (pairs) |
+|---|---|---|
+| `1947` | mil novecientos cuarenta y siete | diecinueve cuarenta y siete |
+| `345` | trescientos cuarenta y cinco | tres cuarenta y cinco |
+| `2015` | dos mil quince | veinte quince |
+
+**Fix:** spell the spoken form into the TTS text. The on-screen label keeps the digits.
+
+### 2. Acronyms depend on the voice — so they go in a pronunciation dictionary, not the text
+
+Measured: the same respelling of an acronym comes out **differently per voice** (one said it with a Spanish *y*, another spelled it out in caps). Hunting for one spelling that works for every voice is a losing race.
+
+The right tool is the ElevenLabs pronunciation dictionary — substitution happens **before** synthesis, so every voice receives the same input:
+
+```
+POST /v1/pronunciation-dictionaries/add-from-rules
+  {"name":"<project>","rules":[
+    {"type":"alias","string_to_replace":"<ACRONYM>","alias":"<spoken form>"}
+  ]}
+  → {id, version_id}
+```
+
+and on every TTS call:
+
+```json
+"pronunciation_dictionary_locators":[
+  {"pronunciation_dictionary_id":"<id>","version_id":"<version_id>"}
+]
+```
+
+⚠️ **`phoneme` (IPA) rules are accepted without error but do NOT apply** under `eleven_multilingual_v2`. Use `alias`.
+
+### Verifying without an ear
+
+Transcribe the generated audio back and **read what it writes** — it discriminates the wrong initial sound from the right one, and from a swallowed one. This is a *pronunciation probe*, not a way to get caption timings (for those, synthesize with `/with-timestamps`; see the note at the end of this file).
+
+A/B on the same voice and the same sentence is the shape that proves it: without the dictionary the transcript comes back with the raw acronym; with it, the transcript spells the intended sound.
+
+**Honest limit of the method:** if the TTS mangles the acronym but stays *recognizable*, the transcriber helpfully re-writes it as the correct acronym and the defect hides. There, only the ear works.
+
+---
+
 ## Voice settings — what each parameter does
 
 | Parameter | Range | Default | What it does |

@@ -49,6 +49,7 @@ This skill is the **assets layer**. Composition (assembling the assets into a fi
 
 1. **Write the script** (text file with the full voiceover).
 2. **Pre-test brand name pronunciation** with the chosen voice (~$0.005, see VOICES.md). Critical step — saves $0.05+ later.
+   - Same pass: write **addresses in spoken pairs** in the VO text (an address is a label, not a quantity) and put **acronyms in an ElevenLabs pronunciation dictionary**, not in the text — the result varies per voice. See "Say-it vs write-it" in VOICES.md.
 3. **Generate VO + music + SFX in parallel** (~3-10s for VO, up to ~30s for music).
 4. **Transcribe the VO with Scribe** to get exact word timestamps (informs the timing of every visual segment).
 5. **Generate static images with kie.ai** (one prompt per visual segment, in parallel).
