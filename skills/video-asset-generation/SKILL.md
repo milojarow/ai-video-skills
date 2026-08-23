@@ -26,6 +26,7 @@ This skill is the **assets layer**. Composition (assembling the assets into a fi
 | **OpenRouter video** | Image-to-video across ~17 models (Veo 3.1, Hailuo, Wan, Sora, Grok). Usually 3-5× cheaper; arbitrary durations; real price catalog. | [OPENROUTER-VIDEO.md](OPENROUTER-VIDEO.md) |
 | **Local (PIL + numpy)** | Rotating a flat art piece to a exact angle or inside a bounded arc — $0, source art pixel-identical, exact loop. | [DETERMINISTIC-ROTATION.md](DETERMINISTIC-ROTATION.md) |
 | **Luna CDN** | File hosting with stable public URLs. | [LUNA-CDN.md](LUNA-CDN.md) |
+| **Third-party / borrowed assets** | Reused footage or a cached font subset — verifying what's baked in before it ships. | [THIRD-PARTY-ASSETS.md](THIRD-PARTY-ASSETS.md) |
 
 ---
 
@@ -140,7 +141,7 @@ Both have working `build-composition.mjs` scripts that generate `index.html` fro
 
 ## When in doubt
 
-- Check the specific reference file ([IMAGES.md](IMAGES.md), [VOICES.md](VOICES.md), [ANIMATION.md](ANIMATION.md), [DETERMINISTIC-ROTATION.md](DETERMINISTIC-ROTATION.md), [OPENROUTER-VIDEO.md](OPENROUTER-VIDEO.md), [MUSIC-SFX.md](MUSIC-SFX.md), [LUNA-CDN.md](LUNA-CDN.md))
+- Check the specific reference file ([IMAGES.md](IMAGES.md), [VOICES.md](VOICES.md), [ANIMATION.md](ANIMATION.md), [DETERMINISTIC-ROTATION.md](DETERMINISTIC-ROTATION.md), [OPENROUTER-VIDEO.md](OPENROUTER-VIDEO.md), [MUSIC-SFX.md](MUSIC-SFX.md), [LUNA-CDN.md](LUNA-CDN.md), [THIRD-PARTY-ASSETS.md](THIRD-PARTY-ASSETS.md))
 - For composition assembly, pivot to `video-composition` skill
 - For caption styling, pivot to `video-captions` skill
 - For workspace setup or Node 22 + sharp issues, pivot to `video-edit-setup` skill
