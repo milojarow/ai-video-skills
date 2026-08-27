@@ -53,7 +53,8 @@ ai-video-skills/
 │   ├── scene-prompt-smith.md
 │   └── asset-qa-validator.md
 ├── notes/                              # research notes (not loaded as skill)
-│   └── exp-01-captions-whisper-vs-scribe.md
+│   ├── exp-01-captions-whisper-vs-scribe.md
+│   └── eval-01-openmontage-vendored-hyperframes.md   # framework audit: is HyperFrames already vendored inside it?
 └── README.md
 ```
 
