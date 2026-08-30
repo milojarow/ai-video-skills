@@ -32,6 +32,30 @@ new script).
 `-hide_banner -nostats`, and validate the check itself against a clip you know has audio
 (a positive control) before trusting a "silent" verdict on the real one.
 
+## Removing an unwanted region from borrowed footage: measure the boundary per frame
+
+Zeroing the alpha over a fixed rectangle — a logo box, a headline band — to strip what a
+foreign studio baked into a borrowed clip can look correct at the first and last frame and
+still be wrong throughout the middle: if the subject moves toward the killed band over the
+clip, a fixed rectangle clips it wherever it grows into that region. The signature is a
+perfectly straight horizontal or vertical edge cutting an organic subject — nature doesn't
+produce straight lines; a rectangle does.
+
+**The rule: measure the keep/kill boundary per frame, never hardcode it.**
+
+Cheap and robust: label the connected components of the subject mask, take the one that
+reaches the anchor (the part that's always present — a stem, a base, the bottom edge), and read
+its topmost row per frame. Everything above that row is overlay; everything below is subject.
+Label at quarter resolution to keep it fast, then gate the full-resolution alpha with the
+upscaled result — the boundary can travel tens of pixels across a clip that a fixed rectangle
+cannot follow.
+
+**Two controls to run before trusting the boundary:**
+- **No long component above the cut** — no component reaching the anchor may start above the
+  measured boundary, or the subject is still being clipped.
+- **Nothing of the overlay below it** — count pixels differing from the replacement background
+  inside the overlay's own band, across every frame. Should be exactly zero.
+
 ## Font subset from a build cache: glyph count ≠ coverage
 
 Pulling a typeface out of `next/font`'s cache (`.next/static/media/*.woff2`) can hand you
