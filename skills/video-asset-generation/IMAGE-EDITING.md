@@ -128,6 +128,35 @@ labelled tenths grid over the image and read from it: one pass, done.
 
 ---
 
+## Extending the canvas (outpaint): deterministic beats generative for a background
+
+Handing a square render to an image-to-image model as a taller canvas — original centred,
+top/bottom bands filled with a blurred hint — to extend it to 9:16 tends to return a
+**different composition**: the subject re-posed, a different surface, different background
+elements. As a standalone image it can look good; as an extension it's useless, because the
+piece's identity lives in the original framing. It's the same failure "composite only the
+edited region back over the original" already covers above — it just costs more here, because
+once the whole geometry has moved there is no clean region left to composite back.
+
+**For a background extension — gradient, sky, a table surface, out-of-focus bokeh — do it
+deterministically instead of asking a model:**
+
+- **Top band:** mirror the first N rows and blur. Mirroring is continuous at the seam by
+  construction, so there's no edge to hide.
+- **Bottom band:** stretch the last ~40 rows downward and blur lightly — on a receding surface
+  this reads as perspective.
+- **Blend both** into the sharp area over a ramp of ~100px so the transition reads as depth of
+  field, not a pasted band.
+
+Cost: zero, instant, and the original is untouched by definition.
+
+**When a model IS the right tool:** when the extension needs new *content* — more of a
+patterned floor, more objects, architecture — not just more of a smooth field. Then use it, and
+composite only the new bands back over the untouched original (same compositing rule as above).
+
+**The tell:** if the prompt is mostly a list of things that must not change, it's the wrong
+tool — a prompt that's 80% prohibitions is a compositing job wearing a prompt's clothes.
+
 ## Method lesson: for a finite batch, the overlay plus your eyes wins
 
 Two automatic arbiters were built to judge "did it touch what it shouldn't?" and
