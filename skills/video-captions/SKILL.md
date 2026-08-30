@@ -311,6 +311,7 @@ Quick lookup of every error we hit during the experiment:
 - Frame freezing in render → re-encode source with `-g 30 -keyint_min 30`
 - "Aguja"/"Abuja" instead of "Ahuja" → `VOCAB_FIXES` map + Whisper `prompt` param
 - Whisper MCP returns text only (no timestamps) → use curl directly with `response_format=verbose_json` and `timestamp_granularities[]=word`
+- ffmpeg times out burning several caption cards via chained `overlay` filters → build one alpha-channel (`yuva420p`) video track and apply a single overlay instead
 
 Full diagnostic recipes in [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 

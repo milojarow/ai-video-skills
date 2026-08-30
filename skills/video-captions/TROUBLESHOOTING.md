@@ -91,6 +91,41 @@ Run this preprocessor on every source video as a habit. The warning is informati
 
 ---
 
+## Performance: N chained overlay filters can time ffmpeg out — build one alpha track instead
+
+**Symptom:** burning N caption cards by chaining one `overlay` per card in a single
+`filter_complex` (`[v][1:v]overlay...[a];[a][2:v]overlay...[b];…`) gets slower with each card
+added, and can hit a command timeout with no error of its own. Every overlay in the chain is
+evaluated for **every frame of the whole timeline**, whether or not that card is visible at
+that moment — eight cards over ~800 frames is thousands of composites for a couple hundred
+frames of actual caption.
+
+This applies when burning caption cards via a raw ffmpeg filter graph rather than a HyperFrames
+composition (the PIPELINE.md / KARAOKE.md builds don't hit this — HyperFrames handles clip
+visibility itself).
+
+**The fix:** render the captions as **one video track with an alpha channel**, then apply a
+single overlay.
+
+1. Build a frame sequence the length of the timeline: for each frame, hard-link the PNG of
+   whichever card is active, or a fully transparent placeholder if none is. Hard links, not
+   copies — the same handful of PNGs gets reused hundreds of times.
+2. Encode that sequence as **VP9 with `yuva420p`** (`-c:v libvpx-vp9 -pix_fmt yuva420p`). Most
+   other codecs silently drop the alpha channel.
+3. `[0:v][1:v]overlay=0:0:format=auto` — one filter, one pass.
+
+**Two things that bite:**
+- The alpha track must be **decoded explicitly** on input (`-c:v libvpx-vp9 -i track.webm`) in
+  some ffmpeg builds, or the alpha is discarded and the captions land on an opaque black
+  rectangle covering the video.
+- Because the track is now the full length of the timeline, its frame count has to match the
+  render exactly — an off-by-one at the tail shows as a caption freezing on the last frame.
+
+**Side benefit:** the timing lives in the frame sequence, so re-timing captions is regenerating
+a directory of links — no filter graph surgery, and the expensive video encode is untouched.
+
+---
+
 ## Pipeline / runtime issues
 
 ### Captions appear consistently late
