@@ -138,6 +138,30 @@ Three to five `<audio>` elements per composition, each on its own `data-track-in
 
 If two `<audio>` elements share the same `data-track-index`, the lint flags `overlapping_clips_same_track`. Always one audio per track. Use 10, 11, 12, … for clarity (skip the visual track range).
 
+### Voice entry timing
+
+A voiceover starting at `data-start="0"` sounds like the file began mid-sentence. Give it
+**750–900ms of runway** so the music and first frame establish before anyone speaks — set the
+VO's `data-start` to that value instead of `0`, rather than trimming silence into the MP3
+itself. Keeping it as a `data-start` offset (not baked into the file) keeps the delay visible
+and adjustable in the mix graph.
+
+**Detecting the actual entry point, if it isn't already known:** the obvious check — "first
+window whose mean volume exceeds base + N dB" — fires on the music ramping in, not on the
+voice (measured: reported entry at 0.20s on a mix whose voice demonstrably started at 0.85s).
+Measure the **jump between consecutive windows** instead — a voice entering over a steady bed
+is a step, not a level; music fading up is a slope, and a slope never produces the largest
+single-step delta:
+
+```
+for t in 0.0 .. 1.3 step 0.1:
+    v[t] = mean_volume of the 100ms window at t
+entry = argmax( v[t] - v[t-1] )
+```
+
+On the same file this reported 0.80s with a +14.2 dB jump — unambiguous. Worth running as a
+gate on every mix — see [VERIFICATION.md](VERIFICATION.md).
+
 ---
 
 ## Build script structure (Node)

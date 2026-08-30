@@ -34,6 +34,20 @@ ffmpeg -y -ss 2.98 -i out.mp4 -frames:v 1 frame-check.png
 
 ---
 
+## Cheap post-render gates worth running on every mix
+
+Next to the checks above, three cheap post-render controls catch what a visual review of the
+timeline does not:
+
+- **First frame is not black.**
+- **Aspect ratio is exactly 0.5625** (1080×1920).
+- **Voice entry is a jump, not a level** — see [COMPOSITION.md](COMPOSITION.md)'s "Voice entry
+  timing" for the detection method (the largest step between consecutive volume windows, not a
+  fixed dB threshold against a baseline — a threshold fires on the music ramping in instead of
+  the voice).
+
+---
+
 ## Gotcha: false negatives in chained checks
 
 When chaining verifications with `&&` / `||`, a **missing file** makes ffmpeg fail to stderr and a trailing `|| echo "NO FREEZES"` fires a false negative. Always confirm the file exists first (`ls`) as an explicit, separate step.
