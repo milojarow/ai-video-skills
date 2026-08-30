@@ -291,6 +291,31 @@ The actual MP4s are at `~/video-lab/<topic>/<video-name>/<variant>/videos/` for 
 
 ---
 
+## The base frame fixes the field of view
+
+A camera move that "pulls back to reveal the whole composition" only works if the base frame
+already contains what it pulls back to. The i2v job only ever has pixels for the crop it was
+given — a zoom-out beyond that crop has nothing to reveal, no matter how the prompt words it.
+
+**The rule:** decide the widest framing the finished piece will ever show, **then** build the
+base frame with that margin, **then** animate. If the piece opens tight and settles wide, the
+wide end is what the model must be given at submission time — that's fixed and no
+post-processing recovers it.
+
+**Consequence for resolution:** a zoom that starts at `z` and ends at `1.0` upscales the
+opening frames by `z`. At 1080p output, `z = 1.78` means the opening shows only ~600px of real
+detail. Two ways to keep it sharp: request a higher output tier so the tight end is still
+oversampled, or pick a smaller `z` — measure what `z` actually reproduces the framing you want
+to open on (it's an exact ratio of two crop widths, not a guess).
+
+**Squares into 9:16:** a square artwork can't fill a 9:16 frame at full width without vertical
+bands. Either extend the art before animating (see [IMAGE-EDITING.md](IMAGE-EDITING.md)'s
+outpaint section), or accept the bands **inside the base frame** so the model animates them too
+— bands added after the fact stay frozen while the centre moves, and the half-animated cells
+straddling the seam are visible.
+
+---
+
 ## Efficiency math (very important)
 
 **Wan's minimum is 5 seconds, but your composition segment may be shorter.** Any time the segment is <5s, the unused portion of the video is cost wasted.
