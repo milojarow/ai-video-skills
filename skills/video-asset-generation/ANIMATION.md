@@ -120,6 +120,38 @@ Validated in short-02 — three videos with people, none of them moved their mou
 
 ---
 
+## Never animate a frame that has text baked in
+
+Feeding a finished poster (art + headline) to any i2v model mangles the letters — the model
+re-synthesises every pixel it animates, and glyphs have no special status in that process. This
+holds even when the prompt says, verbatim, that all text must stay pixel-identical and must
+never be re-rendered, re-lettered, warped or restyled.
+
+**The pipeline that works:**
+
+1. **Remove the text from the base frame first** (image-to-image inpainting — see
+   [IMAGE-EDITING.md](IMAGE-EDITING.md)). Erasing it locally isn't enough when the background
+   has gradient *and* structure — a flat rectangle patch is visible immediately.
+2. **Animate the text-free frame.** Nothing left with a right answer for the model to break.
+3. **Generate the text separately as its own layer**, then composite it back on top of the
+   rendered animation.
+
+**Generating the text layer:** ask a text-capable image model for the copy on **pure flat
+black, nothing else in frame** — no gradient, texture, or vignette. The alpha then falls out of
+luminance with no thresholding argument, and the cut-out has hard edges.
+
+Don't default to typographic composition (drawing the text with a font at render time) just
+because "a model can't spell" — measured on Spanish copy with accents and a mixed-weight
+editorial layout, the image model wrote it correctly (accented vowels and `ñ` included) and
+matched the poster's own typographic voice, which a font substitution would not.
+
+**Keep the text layer at native resolution.** Composite it at the size the shot needs by
+downscaling the generated layer, never by upscaling it. If a camera move changes the apparent
+size over time, scale from the high-resolution source on every frame — never from an
+already-flattened low-res copy.
+
+---
+
 ## Prompt patterns
 
 The prompt describes **motion**, not the scene (the scene is the input image). Be specific about *what* moves.
