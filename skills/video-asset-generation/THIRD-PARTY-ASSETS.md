@@ -56,6 +56,39 @@ cannot follow.
 - **Nothing of the overlay below it** — count pixels differing from the replacement background
   inside the overlay's own band, across every frame. Should be exactly zero.
 
+## Reusing existing footage: composite it, don't regenerate it
+
+A client-supplied clip usually already has the right answer — it's the client's own product,
+action, or moment, already correct. Two generative routes to fold it into a new scene both tend
+to fail:
+
+- **Image-to-video from the clip's first frame** can invert the order of events — the model
+  guesses at motion instead of reproducing what actually happens, and the guess can run
+  backwards on the physics of the action.
+- **Video-to-video / motion transfer** models look for a person to drive the transfer; fed an
+  object instead, some return an explicit rejection (`No valid characters detected in the
+  video`).
+
+**The route that works, and it costs nothing:** check whether the clip's subject separates
+cleanly from its background, then composite the original frames over the new background
+locally — no generation involved.
+
+**Measure separability before assuming it:**
+
+```
+corner patches → per-channel standard deviation   (3–4 on a 0–255 scale = flat)
+object pixels  → share of the frame               (roughly 15-25% = a real subject, not noise)
+```
+
+A flat background at that deviation gives a clean distance-to-colour alpha (soft ramp + light
+blur). A textured or gradient background doesn't separate this cheaply — that's the moment to
+stop and pick a different, more expensive route.
+
+The result is the client's animation **frame for frame** — the honest answer when asked "is
+this still my footage?" Regenerating a clip the client already got right risks the one thing
+that's already correct, to save an hour of compositing, and the failure is the kind the client
+notices instantly because they know what the original looked like.
+
 ## Font subset from a build cache: glyph count ≠ coverage
 
 Pulling a typeface out of `next/font`'s cache (`.next/static/media/*.woff2`) can hand you
