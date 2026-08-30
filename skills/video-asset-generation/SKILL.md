@@ -30,6 +30,28 @@ This skill is the **assets layer**. Composition (assembling the assets into a fi
 
 ---
 
+## Method: decompose before generating
+
+Before submitting a multi-part piece as one generative job, list its components and decide,
+per component, which tool owns it — a generative model asked to preserve N things at once will
+preserve some and quietly destroy the rest, and the destroyed one is always the one with a
+right answer (baked text, a client's own footage, a specific angle).
+
+| Component | Who should make it |
+|---|---|
+| Background / ambient motion | the i2v model |
+| Typography | a text-capable image model, on its own layer — see ANIMATION.md's "never animate baked-in text" rule |
+| Footage the client already owns | nobody — composite it, see [THIRD-PARTY-ASSETS.md](THIRD-PARTY-ASSETS.md) |
+| Camera move (zoom, push) | deterministic, in ffmpeg/PIL, after the fact |
+| Voice, music, captions | their own tracks, mixed last |
+
+Then join the pieces locally. Each component that leaves the generative job becomes
+**deterministic and re-runnable at zero marginal cost**. Signature of having got this wrong:
+several prompt rewrites for the same clip, where the part that keeps breaking is the part of
+the frame that has a *correct* answer rather than an aesthetic one.
+
+---
+
 ## Decision matrix
 
 | Need | Provider | Notes |
