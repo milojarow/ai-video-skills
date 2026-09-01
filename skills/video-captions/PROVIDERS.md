@@ -187,6 +187,41 @@ The build script in PIPELINE.md auto-detects which provider via shape.
 
 5. **`logprob` is per-word.** Unlike Whisper, Scribe exposes confidence. Useful for automating review: words with `logprob < -0.5` (or whatever threshold) get flagged for human inspection.
 
+### Diarization parameters (batch endpoint, measured)
+
+`diarize` alone is a blunt toggle. For anything with more than one speaker — an interview, a
+multi-person narration, a call recording being captioned — these parameters need tuning, and
+the defaults are wrong in both directions:
+
+| Parameter | Behavior | Notes |
+|---|---|---|
+| `diarize=false` | One label by construction, words intact | **Use this for a known single voice** instead of fighting `diarization_threshold` — it's not just simpler, it's the only setting that doesn't cost words (see below) |
+| `num_speakers=1` | **Ignored.** A single-voice recording still comes back over-partitioned into multiple labels | Don't rely on it to force one speaker; use `diarize=false` instead |
+| `num_speakers=<N>` (N known, ≥2) | Reliable — exact N labels, real speakers correctly separated, no measurable word loss | Best option whenever the true speaker count is known in advance |
+| `diarization_threshold` | Capped at **0.4** — `0.5` returns HTTP 422 (`less_than_equal`). Default is roughly 0.22 | Raising it does **not** reliably converge a single-speaker recording to one label (it does not reach 1 even at the cap), and every article's transcript came back with fewer words than default in our test — treat "raise the threshold to fix over-partitioning" as a false lead |
+| `use_multi_channel=true` | Max 5 channels, **max 1 hour of audio**, and cannot be combined with `diarize` | Not viable for long-form (meeting-length) audio without chunking first |
+
+**Word count is a hidden cost of tuning diarization.** Changing `diarization_threshold` away
+from default measurably changed the transcript's word count in our test (fewer words at the
+cap than at default on the same audio) — diarization tuning is not a side-channel setting,
+verify the transcript text is still complete after changing it, not just the speaker labels.
+
+**Diarization output has run-to-run variance.** The same audio transcribed twice with
+identical parameters can differ by about one speaker label and a handful of words. Don't
+treat a difference smaller than that between two parameter choices as a real signal — rerun
+before concluding one setting is better than another.
+
+**Long silences inflate both hallucinated speakers and billed minutes.** Scribe (like other
+diarizing STT) can hallucinate a speaker change across a long silence. Trimming silence
+(e.g. below −60dB, gaps ≥2s, with a small padding buffer) before sending the file cut billed
+minutes substantially in our test. If you trim silence, **remap word timestamps back to the
+original timeline before grouping into caption/speaker segments** — otherwise two words that
+were adjacent across a real silence in the trimmed audio can end up merged into the same
+segment incorrectly.
+
+An official ElevenLabs skills repo (`npx skills add elevenlabs/skills`) documents
+`use_multi_channel`'s channel/duration limits and other speech-to-text options in more depth.
+
 ### Cost
 ~$0.04 USD/min. ~6.7× more expensive than Whisper.
 
@@ -205,7 +240,7 @@ The build script in PIPELINE.md auto-detects which provider via shape.
 | Audio in tonal language (Mandarin, Vietnamese, etc.) | Test both — neither documented well, empirical |
 | Need per-word confidence scores | **Scribe** (only one that exposes `logprob`) |
 | Need SRT/VTT output directly | Either (`additional_formats` on Scribe, or convert JSON to SRT in post for Whisper) |
-| Need speaker diarization | Scribe (`diarize: true`) — Whisper doesn't expose it |
+| Need speaker diarization | Scribe (`diarize: true`) — Whisper doesn't expose it. See "Diarization parameters" above before tuning `diarization_threshold`/`num_speakers` |
 
 ---
 
